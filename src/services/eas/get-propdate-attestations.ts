@@ -6,11 +6,12 @@ import {
   PropdateMessage,
   PropdateObject,
 } from '@/services/builder/types'
+import { attestationChainEndpoints } from '@/services/eas'
+import { fetchFromURL } from '@/services/eas/ipfs'
 import { gql, GraphQLClient } from 'graphql-request'
 import { DateTime } from 'luxon'
 import { flatMap, pipe } from 'remeda'
 import { Hex, zeroHash } from 'viem'
-import { attestationChainEndpoints, fetchFromIPFS } from '.'
 
 interface Data {
   attestations: Attestation[]
@@ -20,7 +21,7 @@ interface Result {
   propdates: Propdate[]
 }
 
-export const getAttestations = async (): Promise<Result> => {
+export const getPropdateAttestations = async (): Promise<Result> => {
   try {
     const oneDayAgoInSeconds = Math.floor(
       DateTime.now().minus({ hours: 24 }).toSeconds(),
@@ -69,8 +70,10 @@ export const getAttestations = async (): Promise<Result> => {
           }),
         )
         return propdates.filter(
-          (propdate) => propdate.originalMessageId === zeroHash,
-        ) // Filter out reply propdates
+          (propdate) =>
+            propdate.proposalId !== zeroHash &&
+            propdate.originalMessageId === zeroHash, // filter out any reply propdates
+        )
       },
     )
     const results = await Promise.all(propdatesPromises)
@@ -79,10 +82,9 @@ export const getAttestations = async (): Promise<Result> => {
       results,
       flatMap((propdates) => propdates),
     )
-    console.log(propdates)
     return { propdates }
   } catch (error) {
-    console.error('Error fetching active proposals:', error)
+    console.error('Error fetching attestations:', error)
     throw error
   }
 }
@@ -92,7 +94,7 @@ export const getAttestations = async (): Promise<Result> => {
  * @param jsonString - The JSON string containing attestation decodedDataJson
  * @returns An object with proposalId, messageType, originalMessageId, and message
  */
-export async function convertPropdateJsonToObject(
+async function convertPropdateJsonToObject(
   jsonString: string,
 ): Promise<PropdateObject> {
   try {
@@ -124,18 +126,18 @@ export async function convertPropdateJsonToObject(
         break
       case MessageType.URL_JSON:
         {
-          const response = await fetchFromIPFS(result.message)
+          const response = await fetchFromURL(result.message)
           result.parsedMessage = JSON.parse(response) as PropdateMessage
         }
         break
       case MessageType.URL_TEXT:
         {
-          const response = await fetchFromIPFS(result.message)
-          result.parsedMessage = { content: response }
+          const response = await fetchFromURL(result.message)
+          result.parsedMessage = { content: response } as PropdateMessage
         }
         break
       default:
-        result.parsedMessage = { content: result.message }
+        result.parsedMessage = { content: result.message } as PropdateMessage
         break
     }
 
@@ -144,7 +146,7 @@ export async function convertPropdateJsonToObject(
     console.error('Error parsing JSON:', error)
     // Return default Attestation object with empty/zero values
     return {
-      proposalId: '0x',
+      proposalId: zeroHash,
       originalMessageId: zeroHash,
       message: '',
       messageType: MessageType.INLINE_TEXT,

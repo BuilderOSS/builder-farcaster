@@ -3,13 +3,12 @@ import {
   getFollowerAddresses,
   getFollowerDAOs,
   getFollowerFids,
-  getProposalFromPropdate,
+  getProposalFromId,
   getUserFid,
 } from '@/commands'
 import { logger } from '@/logger'
 import { addToQueue } from '@/queue'
-import { getAttestations } from '@/services/builder/get-propdate-attestations'
-import { shortenAddress } from '@/utils'
+import { getPropdateAttestations } from '@/services/eas/get-propdate-attestations'
 import { filter, pipe } from 'remeda'
 import { JsonValue } from 'type-fest'
 
@@ -20,9 +19,9 @@ import { JsonValue } from 'type-fest'
  */
 async function handleProposalUpdates() {
   try {
-    logger.info('Fetching new updates...')
-    const { propdates } = await getAttestations()
-    logger.info({ propdates }, 'New updates retrieved.')
+    logger.info('Fetching new propdates...')
+    const { propdates } = await getPropdateAttestations()
+    logger.info({ propdates }, 'New propdates retrieved.')
 
     const userFid = await getUserFid()
     logger.debug({ userFid }, 'User FID retrieved.')
@@ -89,27 +88,26 @@ async function handleProposalUpdates() {
       for (const propdate of propdates) {
         logger.debug(
           {
-            proposalId: shortenAddress(propdate.proposalId),
-            propdateId: shortenAddress(propdate.id),
+            propdateId: propdate.id,
+            proposalId: propdate.proposalId,
           },
           'Processing proposal update for follower.',
         )
 
-        // get dao and proposal data from dao treasury address
-        const proposal = await getProposalFromPropdate(
+        // get proposal data from proposal id
+        const proposal = await getProposalFromId(
           propdate.chain,
-          propdate.id,
           propdate.proposalId,
         )
 
-        if (proposal === null || propdate.proposalId === '0x') {
+        if (!proposal) {
           // skip if proposal doesn't exist or Json parsing error
           logger.debug(
             {
-              proposalId: shortenAddress(propdate.proposalId),
-              propdateId: shortenAddress(propdate.id),
+              propdateId: propdate.id,
+              proposalId: propdate.proposalId,
             },
-            'proposal update for skipped.',
+            'Proposal not found, skipping.',
           )
           continue
         }
@@ -118,8 +116,8 @@ async function handleProposalUpdates() {
         if (!daos.includes(proposal.dao.id)) {
           logger.debug(
             {
-              proposalId: shortenAddress(propdate.proposalId),
-              propdateId: shortenAddress(propdate.id),
+              propdateId: propdate.id,
+              proposalId: propdate.proposalId,
               follower,
             },
             'Proposal DAO ID not associated with follower, skipping.',
@@ -131,8 +129,8 @@ async function handleProposalUpdates() {
         if (notifiedUpdatesSet.has(propdate.id)) {
           logger.debug(
             {
-              proposalId: shortenAddress(propdate.proposalId),
-              propdateId: shortenAddress(propdate.id),
+              propdateId: propdate.id,
+              proposalId: propdate.proposalId,
               follower,
             },
             'Proposal update already notified, skipping.',
@@ -143,8 +141,8 @@ async function handleProposalUpdates() {
         // Add the proposal to the queue for notifications
         logger.info(
           {
-            proposalId: shortenAddress(propdate.proposalId),
-            propdateId: shortenAddress(propdate.id),
+            propdateId: propdate.id,
+            proposalId: propdate.proposalId,
             follower,
           },
           'Adding proposal update to notification queue.',
@@ -160,8 +158,8 @@ async function handleProposalUpdates() {
         notifiedUpdatesSet.add(propdate.id)
         logger.debug(
           {
-            proposalId: shortenAddress(propdate.proposalId),
-            propdateId: shortenAddress(propdate.id),
+            propdateId: propdate.id,
+            proposalId: propdate.proposalId,
             follower,
           },
           'Proposal Update marked as notified.',

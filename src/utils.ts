@@ -20,12 +20,3 @@ export function toRelativeTime(timestamp: number): string {
 export function isPast(timestamp: number) {
   return DateTime.fromSeconds(timestamp) < DateTime.now()
 }
-
-/**
- * shorten Hex address for caching
- * @param address the Hex that needs to be shorten
- * @returns A shortened version of the address in the format "0x1234...5678"
- */
-export const shortenAddress = (address: string) => {
-  return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`
-}

@@ -2,12 +2,11 @@ import { getCache, setCache } from '@/cache'
 import { env } from '@/config'
 import { logger } from '@/logger'
 import { getDAOsForOwners } from '@/services/builder/get-daos-for-owners'
-import { getProposalData } from '@/services/builder/get-proposal-for-propdate'
+import { getProposalData } from '@/services/builder/get-proposal-from-id'
 import { Chain, Proposal } from '@/services/builder/types'
 import { getFollowers } from '@/services/warpcast/get-followers'
 import { getMe } from '@/services/warpcast/get-me'
 import { getVerifications } from '@/services/warpcast/get-verifications'
-import { shortenAddress } from '@/utils'
 import { Hex } from 'viem'
 
 export const CACHE_MAX_AGE_MS = 86400 * 1000 // 1 day in milliseconds
@@ -116,18 +115,13 @@ export async function getUserFid() {
 }
 
 /**
- * Retrieves proposal data associated with a propdate
+ * Retrieves proposal data for a given proposal ID
  * @param chain - The blockchain network to query
- * @param propdateId - attestation Id for caching
  * @param proposalId - proposal Id
  * @returns A promise that resolves to the DAO object
  */
-export async function getProposalFromPropdate(
-  chain: Chain,
-  propdateId: Hex,
-  proposalId: Hex,
-) {
-  const cacheKey = `propdate_${shortenAddress(proposalId)}_${shortenAddress(propdateId)}`
+export async function getProposalFromId(chain: Chain, proposalId: Hex) {
+  const cacheKey = `propdate_${proposalId.toLowerCase()}`
   let proposal = await getCache<Proposal | null>(cacheKey, CACHE_MAX_AGE_MS)
 
   if (proposal) {

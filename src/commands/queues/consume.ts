@@ -15,7 +15,7 @@ type TaskData = {
 
 interface NotificationData {
   recipient: number
-  proposal?: Proposal
+  proposal: Proposal
   propdate?: Propdate
 }
 
@@ -79,7 +79,8 @@ function formatPropdateMessage(propdate: Propdate, proposal: Proposal): string {
 
   const milestoneText =
     parsedMessage.milestoneId !== undefined
-      ? ` for milestone ${parsedMessage.milestoneId.toString()}`
+      ? // Add 1 to the milestone ID to account for the fact that the milestone ID starts at 0
+        ` for milestone ${(parsedMessage.milestoneId + 1).toString()}`
       : ''
 
   return (
@@ -87,7 +88,7 @@ function formatPropdateMessage(propdate: Propdate, proposal: Proposal): string {
     `around ${toRelativeTime(Number(createdAt))}. ` +
     `\n\n${truncatedUpdate} ` +
     `\n\n🚀 Check it out for more details and participate in the voting process!` +
-    `\n\nhttps://nouns.build/dao/${chainName}/${daoId}/vote/${proposalNumber.toString()}`
+    `\n\nhttps://nouns.build/dao/${chainName.toLowerCase()}/${daoId}/vote/${proposalNumber.toString()}`
   )
 }
 
@@ -101,14 +102,13 @@ async function handleNotification(taskId: string, data: NotificationData) {
   try {
     const { recipient, proposal, propdate } = data
     let message: string | undefined
-    if (proposal && !propdate) {
-      message = formatProposalMessage(proposal)
-    } else if (proposal && propdate) {
+
+    if (propdate) {
       message = formatPropdateMessage(propdate, proposal)
+    } else {
+      message = formatProposalMessage(proposal)
     }
-    if (!message) {
-      throw new Error('No valid message format found')
-    }
+
     const idempotencyKey = sha256(message).toString()
 
     const result = await sendDirectCast(env, recipient, message, idempotencyKey)
