@@ -1,3 +1,22 @@
+import { CID } from 'multiformats/cid'
+
+/**
+ * Checks if a string is a valid IPFS CID
+ * @param str - The string to check
+ * @returns True if the string is a valid IPFS CID, false otherwise
+ */
+function isCID(str: string | null | undefined): str is string {
+  if (!str) return false
+
+  try {
+    CID.parse(str)
+    return true
+  } catch {
+    if (/^(?:bafy|Qm)/.test(str)) return true
+    return false
+  }
+}
+
 const IPFS_ENDPOINTS = [
   `https://nouns-builder.mypinata.cloud/ipfs/`,
   `https://ipfs.io/ipfs/`,
@@ -16,8 +35,8 @@ const REQUEST_TIMEOUT = 10000 // 10 seconds
  * @returns The content fetched from IPFS as a string
  */
 const fetchFromIPFS = async (cid: string | undefined): Promise<string> => {
-  if (!cid) {
-    throw new Error('CID is required')
+  if (!isCID(cid)) {
+    throw new Error('CID is invalid')
   }
 
   const urls = IPFS_ENDPOINTS.map((endpoint) => `${endpoint}${cid}`)
@@ -37,7 +56,7 @@ const fetchFromIPFS = async (cid: string | undefined): Promise<string> => {
       const data = await res.text()
       return data
     } catch (err) {
-      console.warn(`❌ Failed to fetch from ${url}: ${(err as Error).message}`)
+      console.warn(`Failed to fetch from ${url}: ${(err as Error).message}`)
     }
   }
 
