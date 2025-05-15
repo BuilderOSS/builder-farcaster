@@ -1,9 +1,10 @@
-import { processProposalsCommand } from '@/commands/process/proposals'
-import { warpcastToken } from '@/commands/warpcast/token'
 import { processInvitesCommand } from '@/commands/process/invites'
+import { processProposalsCommand } from '@/commands/process/proposals'
 import { queueConsumeCommand } from '@/commands/queues/consume'
+import { warpcastToken } from '@/commands/warpcast/token'
 import { Command } from 'commander'
 import packageJson from '../package.json'
+import { processUpdates } from './commands/process/propdates'
 
 // Create a new Command instance for the CLI tool
 const program = new Command()
@@ -24,6 +25,12 @@ processCommand
   .command('proposals')
   .description('Process proposals from API and enqueue tasks')
   .action(processProposalsCommand)
+
+// Register the 'propdates' sub-command under 'process'
+processCommand
+  .command('propdates')
+  .description('Process proposals updates from API and enqueue tasks')
+  .action(processUpdates)
 
 // Register the 'invites' sub-command under 'process'
 processCommand

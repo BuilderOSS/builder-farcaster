@@ -130,8 +130,9 @@ jobs:
         run: |
           ssh ${{ vars.REMOTE_HOST_USER }}@${{ vars.REMOTE_HOST_NAME }} <<EOF
             crontab -r # Remove existing crontab tasks
-            # Add crontab tasks to process proposals and consume queues
+            # Add crontab tasks to process proposals and propdates and consume queues
             echo "0 * * * * cd ${{ vars.REMOTE_HOST_PATH }} && ${{ vars.REMOTE_HOST_NODE }} dist/index.js process proposals >> logs/process_proposals.log 2>&1" >> cron_jobs.txt
+            echo "0 * * * * cd ${{ vars.REMOTE_HOST_PATH }} && ${{ vars.REMOTE_HOST_NODE }} dist/index.js process propdates >> logs/process_propdates.log 2>&1" >> cron_jobs.txt
             echo "* * * * * cd ${{ vars.REMOTE_HOST_PATH }} && ${{ vars.REMOTE_HOST_NODE }} dist/index.js queues consume -l 10 >> logs/consume_queues.log 2>&1" >> cron_jobs.txt
             crontab cron_jobs.txt
             rm -f cron_jobs.txt
