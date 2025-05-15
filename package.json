@@ -1,6 +1,6 @@
 {
   "name": "builder-farcaster",
-  "version": "1.1.6",
+  "version": "1.2.0",
   "description": "Tools and automation solutions for Builder DAO on Farcaster, enhancing community efficiency and engagement.",
   "type": "module",
   "scripts": {
