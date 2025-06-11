@@ -1,12 +1,13 @@
 import { env } from '@/config'
 import { logger } from '@/logger'
 import { completeTask, retryTask } from '@/queue'
-import { Dao, Proposal } from '@/services/builder/types'
+import { Dao, Propdate, Proposal } from '@/services/builder/types'
 import { sendDirectCast } from '@/services/warpcast/send-direct-cast'
 import { isPast, toRelativeTime } from '@/utils'
 import { PrismaClient } from '@prisma/client'
 import sha256 from 'crypto-js/sha256'
 import { uniqueBy } from 'remeda'
+import removeMd from 'remove-markdown'
 
 type TaskData = {
   type: 'notification' | 'test' | 'invitation'
@@ -15,11 +16,80 @@ type TaskData = {
 interface NotificationData {
   recipient: number
   proposal: Proposal
+  propdate?: Propdate
 }
 
 interface InvitationData {
   recipient: number
   daos: Dao[]
+}
+
+/**
+ * Formats a proposal notification message
+ * @param proposal - The proposal data to format into a message
+ * @returns A formatted string containing the proposal notification message
+ */
+function formatProposalMessage(proposal: Proposal): string {
+  const {
+    proposalNumber,
+    title: proposalTitle,
+    dao: {
+      id: daoId,
+      name: daoName,
+      chain: { name: chainName },
+    },
+    timeCreated: createdAt,
+    voteStart: votingStartsAt,
+    voteEnd: votingEndsAt,
+  } = proposal
+
+  return (
+    `📢 A new proposal (#${proposalNumber.toString()}: "${proposalTitle}") has been created on ${daoName} ` +
+    `around ${toRelativeTime(Number(createdAt))}. ` +
+    `🗳️ Voting ${isPast(Number(votingStartsAt)) ? 'started' : 'starts'} ${toRelativeTime(Number(votingStartsAt))} and ` +
+    `${isPast(Number(votingEndsAt)) ? 'ended' : 'ends'} ${toRelativeTime(Number(votingEndsAt))}. ` +
+    `🚀🚀 Check it out for more details and participate in the voting process!` +
+    `\n\nhttps://nouns.build/dao/${chainName.toLowerCase()}/${daoId}/vote/${proposalNumber.toString()}`
+  )
+}
+
+/**
+ * Formats a proposal update (propdate) notification message
+ * @param propdate - The proposal update data to format
+ * @param proposal - The proposal information associated with the update
+ * @returns A formatted string containing the proposal update notification message
+ */
+function formatPropdateMessage(propdate: Propdate, proposal: Proposal): string {
+  const {
+    chain: { name: chainName },
+    parsedMessage,
+    timeCreated: createdAt,
+  } = propdate
+
+  const {
+    proposalNumber,
+    title: proposalTitle,
+    dao: { id: daoId, name: daoName },
+  } = proposal
+
+  const update = removeMd(parsedMessage.content)
+  const truncatedUpdate =
+    update.split('\n').slice(0, 2).join('\n') +
+    (update.split('\n').length > 2 ? '...' : '')
+
+  const milestoneText =
+    parsedMessage.milestoneId !== undefined
+      ? // Add 1 to the milestone ID to account for the fact that the milestone ID starts at 0
+        ` for milestone ${(parsedMessage.milestoneId + 1).toString()}`
+      : ''
+
+  return (
+    `📢 A new update to proposal (#${proposalNumber.toString()}: "${proposalTitle}")${milestoneText} has been created on ${daoName} ` +
+    `around ${toRelativeTime(Number(createdAt))}. ` +
+    `\n\n${truncatedUpdate} ` +
+    `\n\n🚀 Check it out for more details and participate in the voting process!` +
+    `\n\nhttps://nouns.build/dao/${chainName.toLowerCase()}/${daoId}/vote/${proposalNumber.toString()}`
+  )
 }
 
 /**
@@ -30,23 +100,15 @@ interface InvitationData {
  */
 async function handleNotification(taskId: string, data: NotificationData) {
   try {
-    const { recipient, proposal } = data
-    const proposalNumber = proposal.proposalNumber.toString()
-    const proposalTitle = proposal.title
-    const daoId = proposal.dao.id
-    const daoName = proposal.dao.name
-    const chainName = proposal.dao.chain.name.toLowerCase()
-    const createdAt = Number(proposal.timeCreated)
-    const votingStartsAt = Number(proposal.voteStart)
-    const votingEndsAt = Number(proposal.voteEnd)
+    const { recipient, proposal, propdate } = data
+    let message: string | undefined
 
-    const message =
-      `📢 A new proposal (#${proposalNumber}: "${proposalTitle}") has been created on ${daoName} ` +
-      `around ${toRelativeTime(createdAt)}. ` +
-      `🗳️ Voting ${isPast(votingStartsAt) ? 'started' : 'starts'} ${toRelativeTime(votingStartsAt)} and ` +
-      `${isPast(votingEndsAt) ? 'ended' : 'ends'} ${toRelativeTime(votingEndsAt)}. ` +
-      `🚀🚀 Check it out for more details and participate in the voting process!` +
-      `\n\nhttps://nouns.build/dao/${chainName}/${daoId}/vote/${proposalNumber}`
+    if (propdate) {
+      message = formatPropdateMessage(propdate, proposal)
+    } else {
+      message = formatProposalMessage(proposal)
+    }
+
     const idempotencyKey = sha256(message).toString()
 
     const result = await sendDirectCast(env, recipient, message, idempotencyKey)

@@ -2,9 +2,12 @@ import { getCache, setCache } from '@/cache'
 import { env } from '@/config'
 import { logger } from '@/logger'
 import { getDAOsForOwners } from '@/services/builder/get-daos-for-owners'
+import { getProposalData } from '@/services/builder/get-proposal-from-id'
+import { Chain, Proposal } from '@/services/builder/types'
 import { getFollowers } from '@/services/warpcast/get-followers'
 import { getMe } from '@/services/warpcast/get-me'
 import { getVerifications } from '@/services/warpcast/get-verifications'
+import { Hex } from 'viem'
 
 export const CACHE_MAX_AGE_MS = 86400 * 1000 // 1 day in milliseconds
 
@@ -109,4 +112,39 @@ export async function getUserFid() {
     logger.info({ fid }, 'User FID fetched and cached successfully')
   }
   return fid
+}
+
+/**
+ * Retrieves proposal data for a given proposal ID
+ * @param chain - The blockchain network to query
+ * @param proposalId - proposal Id
+ * @returns A promise that resolves to the DAO object
+ */
+export async function getProposalFromId(chain: Chain, proposalId: Hex) {
+  const cacheKey = `propdate_${proposalId.toLowerCase()}`
+  let proposal = await getCache<Proposal | null>(cacheKey, CACHE_MAX_AGE_MS)
+
+  if (proposal) {
+    logger.debug({ proposal }, 'Proposal fetched from cache')
+  } else {
+    try {
+      const response = await getProposalData(chain, proposalId)
+      proposal = response.proposal
+      await setCache(cacheKey, proposal)
+      logger.info({ proposal }, 'Proposal cached successfully')
+    } catch (error) {
+      if (error instanceof Error) {
+        if (error.message.includes('Proposal does not exist')) {
+          logger.error(
+            { message: error.message, stack: error.stack },
+            'Invalid Proposal Id',
+          )
+        }
+      } else {
+        // handle other errors
+        throw error
+      }
+    }
+  }
+  return proposal
 }
