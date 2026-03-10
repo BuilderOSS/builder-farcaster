@@ -1,4 +1,5 @@
 import { processInvitesCommand } from '@/commands/process/invites'
+import { isInvitesEnabled } from '@/flags'
 import { isAuthorizedCronRequest } from '@/services/cron/auth'
 
 export const config = {
@@ -35,6 +36,17 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
   }
 
   const startedAt = Date.now()
+
+  if (!isInvitesEnabled()) {
+    res.status(200).json({
+      ok: true,
+      job: 'process-invites',
+      skipped: true,
+      reason: 'Invites are disabled by ENABLE_INVITES flag',
+      durationMs: Date.now() - startedAt,
+    })
+    return
+  }
 
   try {
     await processInvitesCommand()

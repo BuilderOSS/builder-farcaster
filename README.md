@@ -165,6 +165,7 @@ Configured via `vercel.json`:
 - Cleanup cache and old queue rows: daily
 
 Each cron endpoint validates `Authorization: Bearer <CRON_SECRET>`.
+Invite processing is controlled by `ENABLE_INVITES` and is disabled by default.
 
 ### Runtime Health
 
