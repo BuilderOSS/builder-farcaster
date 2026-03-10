@@ -2,6 +2,7 @@ import { env } from '@/config'
 import { fetchRequest, HttpRequestMethod } from '@/services/warpcast'
 import { input } from '@inquirer/prompts'
 import { getPublicKeyAsync, utils } from '@noble/ed25519'
+import qrcode from 'qrcode-terminal'
 import { Hex } from 'viem'
 import { mnemonicToAccount } from 'viem/accounts'
 
@@ -214,6 +215,8 @@ export async function warpcastToken(): Promise<void> {
 
   console.log('\nOpen this URL in Warpcast and approve the signer request:\n')
   console.log(deeplinkUrl)
+  console.log('\nQR code:\n')
+  qrcode.generate(deeplinkUrl, { small: true })
   console.log('\nWaiting for approval...\n')
 
   const completed = await waitForSignedKeyCompletion(request.token)

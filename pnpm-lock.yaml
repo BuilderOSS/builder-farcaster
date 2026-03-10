@@ -58,6 +58,9 @@ importers:
       prisma:
         specifier: 5.22.0
         version: 5.22.0
+      qrcode-terminal:
+        specifier: 0.12.0
+        version: 0.12.0
       remeda:
         specifier: 2.17.3
         version: 2.17.3
@@ -95,6 +98,9 @@ importers:
       '@types/node':
         specifier: 22.9.1
         version: 22.9.1
+      '@types/qrcode-terminal':
+        specifier: 0.12.2
+        version: 0.12.2
       '@types/uuid':
         specifier: 10.0.0
         version: 10.0.0
@@ -1443,6 +1449,12 @@ packages:
     resolution:
       {
         integrity: sha512-37i+OaWTh9qeK4LSHPsyRC7NahnGotNuZvjLSgcPzblpHB3rrCJxAOgI5gCdKm7coonsaX1Of0ILiTcnZjbfxA==,
+      }
+
+  '@types/qrcode-terminal@0.12.2':
+    resolution:
+      {
+        integrity: sha512-v+RcIEJ+Uhd6ygSQ0u5YYY7ZM+la7GgPbs0V/7l/kFs2uO4S8BcIUEMoP7za4DNIqNnUD5npf0A/7kBhrCKG5Q==,
       }
 
   '@types/trusted-types@2.0.7':
@@ -4789,6 +4801,13 @@ packages:
       }
     engines: { node: '>=6' }
 
+  qrcode-terminal@0.12.0:
+    resolution:
+      {
+        integrity: sha512-EXtzRZmC+YGmGlDFbXKxQiMZNwCLEO6BANKXG4iCtSIM0yqc/pappSx3RIKr4r0uh5JsBckOXeKrB3Iz7mdQpQ==,
+      }
+    hasBin: true
+
   qrcode@1.5.3:
     resolution:
       {
@@ -7233,6 +7252,8 @@ snapshots:
       undici-types: 6.19.8
 
   '@types/normalize-package-data@2.4.4': {}
+
+  '@types/qrcode-terminal@0.12.2': {}
 
   '@types/trusted-types@2.0.7': {}
 
@@ -9853,6 +9874,8 @@ snapshots:
   punycode@1.4.1: {}
 
   punycode@2.3.1: {}
+
+  qrcode-terminal@0.12.0: {}
 
   qrcode@1.5.3:
     dependencies:
