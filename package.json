@@ -4,7 +4,7 @@
   "description": "Tools and automation solutions for Builder DAO on Farcaster, enhancing community efficiency and engagement.",
   "type": "module",
   "scripts": {
-    "prebuild": "pnpm prisma:migrate && pnpm prisma:generate",
+    "prebuild": "pnpm prisma:generate",
     "build": "vite build",
     "predev": "pnpm lint && pnpm build",
     "dev": "pnpm dev:process && pnpm dev:consume",
@@ -17,6 +17,7 @@
     "prepare": "husky || :",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate deploy",
+    "prisma:migrate:status": "prisma migrate status",
     "pretest": "pnpm build",
     "test": "vitest run --passWithNoTests"
   },

@@ -137,12 +137,30 @@ Production deployment is optimized for Vercel + Neon Postgres:
 - **Database**: Neon Postgres via Prisma (`DATABASE_URL` + `DIRECT_URL`)
 - **Queue Processing**: Scheduled queue consumer with retry/backoff support
 
+### First-time Bring-up Checklist
+
+1. Set all production environment variables in Vercel.
+2. Run database migrations against Neon:
+
+   ```bash
+   pnpm prisma:migrate
+   ```
+
+3. Verify health endpoint:
+
+   ```bash
+   curl https://<your-app-domain>/api/health
+   ```
+
+4. Enable Vercel cron schedules.
+
 ### Cron Jobs
 
 Configured via `vercel.json`:
 
 - Process proposals: every hour
 - Process propdates: every hour
+- Process invites: monthly
 - Consume queue: every minute
 - Cleanup cache and old queue rows: daily
 
