@@ -48,3 +48,4 @@ Use env vars to scope processing during testing:
 - `TEST_TARGET_CHAINS=base,optimism`
 - `TEST_DRY_RUN=true`
 - `ENABLE_TESTNET_CHAINS=true` (includes testnet chains in runtime queries)
+- `NO_SEND_NOTIFICATIONS=true` (consumer logs payloads instead of sending Warpcast DMs)

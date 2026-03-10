@@ -1,4 +1,5 @@
 import { env } from '@/config'
+import { parseBooleanEnv } from '@/flags'
 import { logger } from '@/logger'
 import { claimPendingTasks, completeTask, retryTask } from '@/queue'
 import { Dao, Propdate, Proposal } from '@/services/builder/types'
@@ -8,6 +9,8 @@ import sha256 from 'crypto-js/sha256'
 import { uniqueBy } from 'remeda'
 import removeMd from 'remove-markdown'
 import { v4 as uuidv4 } from 'uuid'
+
+const noSendNotifications = parseBooleanEnv(env.NO_SEND_NOTIFICATIONS, false)
 
 type TaskData = {
   type: 'notification' | 'test' | 'invitation'
@@ -114,6 +117,18 @@ async function handleNotification(
 
     const idempotencyKey = sha256(message).toString()
 
+    if (noSendNotifications) {
+      logger.info(
+        {
+          idempotencyKey,
+          message,
+          recipient,
+        },
+        'NO_SEND_NOTIFICATIONS enabled. Skipping direct cast send.',
+      )
+      return true
+    }
+
     const result = await sendDirectCast(env, recipient, message, idempotencyKey)
 
     if (!result.success) {
@@ -168,6 +183,20 @@ async function handleInvitation(
           `and make your voice count! 🎉`
 
     const idempotencyKey = sha256(message).toString()
+
+    if (noSendNotifications) {
+      logger.info(
+        {
+          daos: uniqueDaos.map((dao) => dao.name),
+          idempotencyKey,
+          message,
+          recipient,
+        },
+        'NO_SEND_NOTIFICATIONS enabled. Skipping invitation direct cast send.',
+      )
+      return true
+    }
+
     const result = await sendDirectCast(env, recipient, message, idempotencyKey)
 
     if (!result.success) {

@@ -13,6 +13,7 @@ const envSchema = z.object({
   WARPCAST_BASE_URL: z.string().url('WARPCAST_BASE_URL must be a valid URL'),
   CRON_SECRET: z.string().min(1, 'CRON_SECRET is required').optional(),
   ENABLE_TESTNET_CHAINS: z.string().optional(),
+  NO_SEND_NOTIFICATIONS: z.string().optional(),
   NODE_ENV: z.enum(['development', 'production', 'test']),
 })
 

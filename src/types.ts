@@ -7,5 +7,6 @@ export type Env = BuilderEnv &
     DIRECT_URL?: string
     CRON_SECRET?: string
     ENABLE_TESTNET_CHAINS?: string
+    NO_SEND_NOTIFICATIONS?: string
     NODE_ENV: 'development' | 'production' | 'test'
   }

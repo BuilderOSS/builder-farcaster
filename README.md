@@ -184,6 +184,7 @@ For controlled testing, you can scope processing to specific followers, DAOs, or
   - `TEST_TARGET_DAO_IDS`
   - `TEST_TARGET_CHAINS`
   - `TEST_DRY_RUN`
+  - `NO_SEND_NOTIFICATIONS`
 - Per-request overrides on proposal/propdate/invite cron endpoints:
   - `fid` (comma-separated FIDs)
   - `daoId` (comma-separated DAO IDs)
@@ -220,6 +221,7 @@ CRON_SECRET=<shared_cron_secret>
 # Feature flags / test targeting
 ENABLE_INVITES=false
 ENABLE_TESTNET_CHAINS=false
+NO_SEND_NOTIFICATIONS=false
 TEST_TARGET_FIDS=
 TEST_TARGET_DAO_IDS=
 TEST_TARGET_CHAINS=
