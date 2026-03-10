@@ -1,111 +1,71 @@
-## Deployment Instructions
+## Deployment (Vercel + Neon)
 
-### Branching and Versioning Strategy
+This project deploys to Vercel and uses Neon Postgres for persistence.
 
-In this repository, we keep ongoing changes on the `develop` branch, which acts as our main integration branch. When
-changes are ready for production, we merge them into the `master` branch. Each merge to `master` is accompanied by a
-proper SemVer tag, and the version number is updated in the package file accordingly.
+### 1) Provision Neon
 
-Each time changes are pushed to the `master` branch under these conditions, a new GitHub release is generated. When you
-publish a GitHub release, it triggers another workflow that builds the project and pushes it to the deployment server
-using the secrets and variables provided during setup.
+Create a Neon project and copy both connection strings:
 
-In this repository, we use a combination of Git Flow and GitHub Flow to manage our branching strategy. Git Flow helps us
-structure our development process by using feature branches and releases, while GitHub Flow allows for a simplified
-workflow for quick changes and collaboration.
+- `DATABASE_URL`: pooled connection string (runtime)
+- `DIRECT_URL`: direct connection string (Prisma migrations)
 
-For versioning, we follow Semantic Versioning (SemVer), which means version numbers follow the pattern
-`MAJOR.MINOR.PATCH` and increment based on backward-incompatible changes, new features, and bug fixes, respectively.
+### 2) Configure Vercel Environment Variables
 
-By following these practices, we ensure a structured approach to development, testing, and releasing new versions of the
-software, which helps in maintaining quality and reliability throughout the project lifecycle.
-
-### Step 1: Set Environment Variables
-
-The following environment variables are set on GitHub for deployment purposes, based on the deployment server
-configuration. Use the `gh` command to set them:
+Set these in Vercel Project Settings for Production:
 
 ```bash
-gh variable set REMOTE_HOST_NAME --body "68.183.109.99"
-gh variable set REMOTE_HOST_NODE --body "/usr/bin/node"
-gh variable set REMOTE_HOST_PATH --body "/home/deploy/builder-farcaster"
-gh variable set REMOTE_HOST_PNPM --body "/usr/local/bin/pnpm"
-gh variable set REMOTE_HOST_USER --body "deploy"
+NODE_ENV=production
+DATABASE_URL=<pooled_neon_connection_string>
+DIRECT_URL=<direct_neon_connection_string>
+
+BUILDER_SUBGRAPH_ETHEREUM_URL=<ethereum_subgraph_url>
+BUILDER_SUBGRAPH_BASE_URL=<base_subgraph_url>
+BUILDER_SUBGRAPH_OPTIMISM_URL=<optimism_subgraph_url>
+BUILDER_SUBGRAPH_ZORA_URL=<zora_subgraph_url>
+
+WARPCAST_BASE_URL=https://api.warpcast.com
+WARPCAST_API_KEY=<your_api_key>
+WARPCAST_AUTH_TOKEN=<your_auth_token>
+
+CRON_SECRET=<shared_secret>
+ENABLE_INVITES=false
 ```
 
-Ensure these variables are configured correctly in the repository settings to guarantee smooth deployment.
+Optional targeted-test env vars:
 
-### Step 2: Branching Strategy
+```bash
+TEST_TARGET_FIDS=
+TEST_TARGET_DAO_IDS=
+TEST_TARGET_CHAINS=
+TEST_DRY_RUN=false
+```
 
-1. **Create a Feature Branch**: Start by creating a feature branch from the `develop` branch. Use a descriptive branch
-   name to make it easy to understand its purpose:
+### 3) Run Prisma Migrations
 
-   ```bash
-   git checkout -b feature/<feature-name>
-   ```
+Before enabling cron jobs, run migrations against Neon:
 
-   This ensures that ongoing changes are isolated and do not interfere with the main codebase until they are ready to be
-   merged.
+```bash
+pnpm prisma:migrate
+```
 
-2. **Merge Changes into Develop**: Once your feature or bug fix is complete and reviewed, merge it back into the
-   `develop` branch:
+### 4) Deploy and Smoke Test
 
-   ```bash
-   git checkout develop
-   git merge feature/<feature-name>
-   ```
+After deployment:
 
-   The `develop` branch serves as the main integration branch where all ongoing development work is consolidated.
+1. Check health endpoint: `GET /api/health`
+2. Manually hit one cron endpoint with auth header:
 
-3. **Prepare for Release**: When the changes are ready for production, create a release branch from `develop`:
+```bash
+curl -H "Authorization: Bearer <CRON_SECRET>" \
+  "https://<your-app-domain>/api/cron/process-proposals?dryRun=true"
+```
 
-   ```bash
-   git checkout -b release/<version-number>
-   ```
+### 5) Enable Vercel Cron
 
-   Release branches are meant for final preparation of a release, including testing and minor adjustments.
+Cron jobs are defined in `vercel.json`:
 
-4. **Update Version in Package File**: Update the version number in the `package.json` or equivalent package file before
-   merging. This ensures consistency between the tagged version and the project metadata.
-
-5. **Merge into Master**: After testing, merge the release branch into the `master` branch:
-
-   ```bash
-   git checkout master
-   git merge release/<version-number>
-   ```
-
-   The `master` branch is the production-ready branch and should always reflect the latest stable version of the code.
-
-6. **Tag the Release**: Tag the new version in line with Semantic Versioning (SemVer):
-
-   ```bash
-   git tag -a v<version-number> -m "Release version <version-number>"
-   git push origin v<version-number>
-   ```
-
-   Tagging helps in keeping track of different versions of the project and makes it easier to roll back if needed.
-
-### Step 3: GitHub Release
-
-1. **Generate Release**: Push the changes to the `master` branch. A GitHub release will automatically be generated from
-   this push.
-
-2. **Publish the Release**: Navigate to the releases page in the GitHub repository, edit the release notes if needed,
-   and click **Publish Release**. This makes the new version officially available for use and further deployment.
-
-### Step 4: Deployment Workflow
-
-1. **Deployment Trigger**: Publishing the GitHub release will trigger a deployment workflow. This is an automated
-   process that starts as soon as a new release is published.
-
-2. **Build and Deploy**: The workflow will build the project and push it to the deployment server using the secrets and
-   environment variables configured during the setup. The build process uses the environment configurations from the
-   `master` branch to ensure consistency.
-
-   The deployment process makes sure that the latest stable version is available in the production environment, and the
-   environment variables are appropriately set to match the production settings.
-
-3. **Verify Deployment**: Once deployed, verify the application is running as expected in the production environment.
-   This may involve running some manual or automated tests to ensure everything is functioning correctly after the
-   deployment.
+- proposals hourly
+- propdates hourly
+- invites monthly (gated by `ENABLE_INVITES`)
+- consume queue every minute
+- cleanup daily

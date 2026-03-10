@@ -61,7 +61,7 @@ This repository contains the source code for the @builderbot Farcaster bot.
 - Node.js 18+
 - pnpm
 - Warpcast API credentials
-- Database (SQLite)
+- Postgres database (Neon recommended)
 
 ### Installation
 
@@ -89,7 +89,9 @@ This repository contains the source code for the @builderbot Farcaster bot.
    - `WARPCAST_AUTH_TOKEN` - Your Warpcast authentication token
    - `WARPCAST_API_KEY` - Your Warpcast API key
    - `BUILDER_SUBGRAPH_*_URL` - Subgraph URLs for each chain
-   - `DATABASE_URL` - SQLite database connection string
+   - `DATABASE_URL` - Postgres pooled connection string
+   - `DIRECT_URL` - Postgres direct connection string for Prisma migrations
+   - `CRON_SECRET` - Shared secret for cron endpoint auth
 
 4. Initialize the database:
 
@@ -123,10 +125,10 @@ This repository contains the source code for the @builderbot Farcaster bot.
 The bot is built with:
 
 - **CLI Interface**: Commander.js for command-line operations
-- **Queue System**: SQLite-based task queue with retry logic
+- **Queue System**: Postgres-backed task queue with retry/backoff logic
 - **Multi-chain Integration**: GraphQL queries to Builder subgraphs
 - **Farcaster Integration**: Warpcast API for sending direct casts
-- **Database**: Prisma ORM with SQLite
+- **Database**: Prisma ORM with Postgres (Neon)
 
 ## 🚀 Deployment
 
@@ -215,6 +217,13 @@ WARPCAST_BASE_URL=https://api.warpcast.com
 WARPCAST_API_KEY=<your_api_key>
 WARPCAST_AUTH_TOKEN=<your_auth_token>
 CRON_SECRET=<shared_cron_secret>
+
+# Feature flags / test targeting
+ENABLE_INVITES=false
+TEST_TARGET_FIDS=
+TEST_TARGET_DAO_IDS=
+TEST_TARGET_CHAINS=
+TEST_DRY_RUN=false
 ```
 
 ## 📄 License
