@@ -19,7 +19,8 @@ Fill in at least:
 - `NODE_ENV=development`
 - `DATABASE_URL` and `DIRECT_URL` (Postgres)
 - `WARPCAST_BASE_URL`, `WARPCAST_API_KEY`, `WARPCAST_AUTH_TOKEN`
-- `BUILDER_SUBGRAPH_*_URL`
+- `NEXT_PUBLIC_GOLDSKY_PROJECT_ID` (optional)
+- `NEXT_PUBLIC_NETWORK_TYPE` (optional)
 - `CRON_SECRET`
 
 ### 3) Initialize Prisma
@@ -46,3 +47,4 @@ Use env vars to scope processing during testing:
 - `TEST_TARGET_DAO_IDS=0xabc...,0xdef...`
 - `TEST_TARGET_CHAINS=base,optimism`
 - `TEST_DRY_RUN=true`
+- `ENABLE_TESTNET_CHAINS=true` (includes testnet chains in runtime queries)

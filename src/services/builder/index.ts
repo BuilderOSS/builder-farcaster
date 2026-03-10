@@ -1,37 +1,63 @@
 import { env } from '@/config'
+import { parseBooleanEnv } from '@/flags'
 import { Chain } from '@/services/builder/types'
+import { PUBLIC_SUBGRAPH_URL } from '@buildeross/constants'
+import { CHAIN_ID } from '@buildeross/types'
 
-export const chains: Chain[] = [
+const allChains: Chain[] = [
   {
-    id: 1,
+    id: CHAIN_ID.ETHEREUM,
     name: 'Ethereum',
   },
   {
-    id: 10,
+    id: CHAIN_ID.OPTIMISM,
     name: 'Optimism',
   },
   {
-    id: 8453,
+    id: CHAIN_ID.BASE,
     name: 'Base',
   },
   {
-    id: 7777777,
+    id: CHAIN_ID.ZORA,
     name: 'Zora',
+  },
+  {
+    id: CHAIN_ID.SEPOLIA,
+    isTestnet: true,
+    name: 'Sepolia',
+  },
+  {
+    id: CHAIN_ID.OPTIMISM_SEPOLIA,
+    isTestnet: true,
+    name: 'Optimism Sepolia',
+  },
+  {
+    id: CHAIN_ID.BASE_SEPOLIA,
+    isTestnet: true,
+    name: 'Base Sepolia',
+  },
+  {
+    id: CHAIN_ID.ZORA_SEPOLIA,
+    isTestnet: true,
+    name: 'Zora Sepolia',
   },
 ]
 
-export const endpoints: Record<number, string> = {
-  1: env.BUILDER_SUBGRAPH_ETHEREUM_URL,
-  10: env.BUILDER_SUBGRAPH_OPTIMISM_URL,
-  8453: env.BUILDER_SUBGRAPH_BASE_URL,
-  7777777: env.BUILDER_SUBGRAPH_ZORA_URL,
-}
+const includeTestnetChains =
+  env.NODE_ENV !== 'production' ||
+  parseBooleanEnv(env.ENABLE_TESTNET_CHAINS, false)
+
+export const chains = allChains.filter((chain) =>
+  includeTestnetChains ? true : chain.isTestnet !== true,
+)
 
 export const chainEndpoints = chains.map((chain) => {
-  const endpoint: string | undefined = endpoints[chain.id]
+  const endpoint = PUBLIC_SUBGRAPH_URL.get(chain.id)
+
   if (!endpoint) {
     throw new Error(`Endpoint not found for chain ID: ${chain.id.toString()}`)
   }
+
   return {
     chain,
     endpoint,

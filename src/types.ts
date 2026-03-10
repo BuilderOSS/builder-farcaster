@@ -6,5 +6,6 @@ export type Env = BuilderEnv &
     DATABASE_URL: string
     DIRECT_URL?: string
     CRON_SECRET?: string
+    ENABLE_TESTNET_CHAINS?: string
     NODE_ENV: 'development' | 'production' | 'test'
   }

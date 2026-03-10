@@ -18,10 +18,8 @@ NODE_ENV=production
 DATABASE_URL=<pooled_neon_connection_string>
 DIRECT_URL=<direct_neon_connection_string>
 
-BUILDER_SUBGRAPH_ETHEREUM_URL=<ethereum_subgraph_url>
-BUILDER_SUBGRAPH_BASE_URL=<base_subgraph_url>
-BUILDER_SUBGRAPH_OPTIMISM_URL=<optimism_subgraph_url>
-BUILDER_SUBGRAPH_ZORA_URL=<zora_subgraph_url>
+NEXT_PUBLIC_GOLDSKY_PROJECT_ID=<optional_goldsky_project_id>
+NEXT_PUBLIC_NETWORK_TYPE=<optional_mainnet_or_testnet>
 
 WARPCAST_BASE_URL=https://api.warpcast.com
 WARPCAST_API_KEY=<your_api_key>
@@ -29,6 +27,7 @@ WARPCAST_AUTH_TOKEN=<your_auth_token>
 
 CRON_SECRET=<shared_secret>
 ENABLE_INVITES=false
+ENABLE_TESTNET_CHAINS=false
 ```
 
 Optional targeted-test env vars:
@@ -69,3 +68,10 @@ Cron jobs are defined in `vercel.json`:
 - invites monthly (gated by `ENABLE_INVITES`)
 - consume queue every minute
 - cleanup daily
+
+Testnet chains are excluded in production by default. Set `ENABLE_TESTNET_CHAINS=true` to include them for targeted testing.
+
+## Future Option
+
+Today this bot uses `@buildeross/constants` for endpoint resolution and local GraphQL request code.
+We can later migrate request execution to `@buildeross/sdk/subgraph` helpers once we want full SDK query ownership.

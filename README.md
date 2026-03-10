@@ -88,7 +88,8 @@ This repository contains the source code for the @builderbot Farcaster bot.
 
    - `WARPCAST_AUTH_TOKEN` - Your Warpcast authentication token
    - `WARPCAST_API_KEY` - Your Warpcast API key
-   - `BUILDER_SUBGRAPH_*_URL` - Subgraph URLs for each chain
+   - `NEXT_PUBLIC_GOLDSKY_PROJECT_ID` (optional) - Goldsky project id override
+   - `NEXT_PUBLIC_NETWORK_TYPE` (optional) - set `testnet` to use `dev` subgraph version
    - `DATABASE_URL` - Postgres pooled connection string
    - `DIRECT_URL` - Postgres direct connection string for Prisma migrations
    - `CRON_SECRET` - Shared secret for cron endpoint auth
@@ -206,11 +207,9 @@ NODE_ENV=production
 DATABASE_URL=<pooled_neon_connection_string>
 DIRECT_URL=<direct_neon_connection_string>
 
-# Nouns Builder Subgraphs
-BUILDER_SUBGRAPH_ETHEREUM_URL=<ethereum_subgraph_url>
-BUILDER_SUBGRAPH_BASE_URL=<base_subgraph_url>
-BUILDER_SUBGRAPH_OPTIMISM_URL=<optimism_subgraph_url>
-BUILDER_SUBGRAPH_ZORA_URL=<zora_subgraph_url>
+# Optional Builder subgraph overrides
+NEXT_PUBLIC_GOLDSKY_PROJECT_ID=<goldsky_project_id>
+NEXT_PUBLIC_NETWORK_TYPE=<mainnet_or_testnet>
 
 # Warpcast API
 WARPCAST_BASE_URL=https://api.warpcast.com
@@ -220,11 +219,17 @@ CRON_SECRET=<shared_cron_secret>
 
 # Feature flags / test targeting
 ENABLE_INVITES=false
+ENABLE_TESTNET_CHAINS=false
 TEST_TARGET_FIDS=
 TEST_TARGET_DAO_IDS=
 TEST_TARGET_CHAINS=
 TEST_DRY_RUN=false
 ```
+
+### Future Improvement
+
+Current runtime uses `@buildeross/constants` for subgraph URLs and keeps request code local in this bot.
+For future simplification, we can migrate to `@buildeross/sdk/subgraph` request helpers directly once the SDK exposes all query helpers we need for notification ingestion.
 
 ## 📄 License
 

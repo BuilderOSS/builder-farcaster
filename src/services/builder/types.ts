@@ -1,15 +1,14 @@
+import { CHAIN_ID } from '@buildeross/types'
 import { Hex } from 'viem'
 
 export interface Env {
-  BUILDER_SUBGRAPH_ETHEREUM_URL: string
-  BUILDER_SUBGRAPH_BASE_URL: string
-  BUILDER_SUBGRAPH_OPTIMISM_URL: string
-  BUILDER_SUBGRAPH_ZORA_URL: string
+  ENABLE_TESTNET_CHAINS?: string
 }
 
 export interface Chain {
-  id: number
+  id: CHAIN_ID
   name: string
+  isTestnet?: boolean
 }
 
 export interface Dao {

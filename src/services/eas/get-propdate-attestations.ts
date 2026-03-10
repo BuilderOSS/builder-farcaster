@@ -1,12 +1,10 @@
 import {
-  Attestation,
-  AttestationJsonData,
   MessageType,
   Propdate,
   PropdateMessage,
   PropdateObject,
 } from '@/services/builder/types'
-import { attestationChainEndpoints } from '@/services/eas'
+import { propdateChainEndpoints } from '@/services/eas'
 import { fetchFromURL } from '@/services/eas/ipfs'
 import { gql, GraphQLClient } from 'graphql-request'
 import { DateTime } from 'luxon'
@@ -14,7 +12,21 @@ import { flatMap, pipe } from 'remeda'
 import { Hex, zeroHash } from 'viem'
 
 interface Data {
-  attestations: Attestation[]
+  proposalUpdates: {
+    id: Hex
+    creator: string
+    messageType: number
+    message: string
+    originalMessageId: Hex
+    timestamp: string
+    transactionHash: Hex
+    proposal: {
+      proposalId: Hex
+      dao: {
+        tokenAddress: string
+      }
+    }
+  }[]
 }
 
 interface Result {
@@ -27,115 +39,122 @@ export const getPropdateAttestations = async (): Promise<Result> => {
       DateTime.now().minus({ hours: 24 }).toSeconds(),
     )
 
-    const propdatesPromises = attestationChainEndpoints.map(
-      async ({ chain, endpoint, schemaId }) => {
+    const propdatesPromises = propdateChainEndpoints.map(
+      async ({ chain, endpoint }) => {
         const query = gql`
-        {
-          attestations(
-            where: {
-              schemaId: {
-                equals: "${schemaId}"
+          query recentPropdates($fromTimestamp: BigInt!, $zeroHash: Bytes!) {
+            proposalUpdates(
+              where: {
+                timestamp_gte: $fromTimestamp
+                deleted: false
+                originalMessageId: $zeroHash
               }
-              timeCreated:{
-                gte: ${oneDayAgoInSeconds}
-              }
-              isOffchain: {
-                equals: false
+              orderBy: timestamp
+              orderDirection: desc
+              first: 1000
+            ) {
+              id
+              creator
+              messageType
+              message
+              originalMessageId
+              timestamp
+              transactionHash
+              proposal {
+                proposalId
+                dao {
+                  tokenAddress
+                }
               }
             }
-          ) {
-            id
-            recipient
-            timeCreated
-            decodedDataJson
           }
+        `
+
+        const variables = {
+          fromTimestamp: oneDayAgoInSeconds.toString(),
+          zeroHash,
         }
-      `
 
         const client = new GraphQLClient(endpoint)
-        const response = await client.request<Data>(query)
+        const response = await client.request<Data>(query, variables)
         const propdates = await Promise.all(
-          response.attestations.map(async (attestation) => {
-            const propdateObject = await convertPropdateJsonToObject(
-              attestation.decodedDataJson,
+          response.proposalUpdates.map(async (update) => {
+            const propdateObject = await convertPropdateToObject(
+              update.messageType,
+              update.message,
+              update.proposal.proposalId,
+              update.originalMessageId,
             )
 
             return {
               ...propdateObject,
-              id: attestation.id,
-              recipient: attestation.recipient,
-              timeCreated: attestation.timeCreated,
               chain,
+              id: update.id,
+              recipient: update.proposal.dao.tokenAddress,
+              timeCreated: Number(update.timestamp),
             }
           }),
         )
+
         return propdates.filter(
           (propdate) =>
             propdate.proposalId !== zeroHash &&
-            propdate.originalMessageId === zeroHash, // filter out any reply propdates
+            propdate.originalMessageId === zeroHash,
         )
       },
     )
+
     const results = await Promise.all(propdatesPromises)
 
     const propdates = pipe(
       results,
-      flatMap((propdates) => propdates),
+      flatMap((chainPropdates) => chainPropdates),
     )
+
     return { propdates }
   } catch (error) {
-    console.error('Error fetching attestations:', error)
+    console.error('Error fetching propdates:', error)
     throw error
   }
 }
 
 /**
- * Converts a JSON string into an Propdate object
- * @param jsonString - The JSON string containing attestation decodedDataJson
- * @returns An object with proposalId, messageType, originalMessageId, and message
+ * Converts raw proposal update fields into a Propdate object.
+ * @param messageType - Encoded message type.
+ * @param message - Encoded or inline message.
+ * @param proposalId - Related proposal ID.
+ * @param originalMessageId - Original message reference.
+ * @returns Parsed propdate object.
  */
-async function convertPropdateJsonToObject(
-  jsonString: string,
+async function convertPropdateToObject(
+  messageType: number,
+  message: string,
+  proposalId: Hex,
+  originalMessageId: Hex,
 ): Promise<PropdateObject> {
   try {
-    const parsed = JSON.parse(jsonString) as AttestationJsonData[]
-    const result = parsed.reduce(
-      (acc: Partial<PropdateObject>, item: AttestationJsonData) => {
-        const name = item.name
-        const value = item.value.value
-        switch (name) {
-          case 'messageType':
-            acc.messageType = Number(value) as MessageType
-            break
-          case 'proposalId':
-          case 'originalMessageId':
-            acc[name] = String(value) as Hex
-            break
-          case 'message':
-            acc.message = String(value)
-            break
-        }
-        return acc
-      },
-      {},
-    ) as PropdateObject
+    const result: PropdateObject = {
+      message,
+      messageType: Number(messageType) as MessageType,
+      originalMessageId,
+      parsedMessage: { content: '' },
+      proposalId,
+    }
 
     switch (result.messageType) {
       case MessageType.INLINE_JSON:
         result.parsedMessage = JSON.parse(result.message) as PropdateMessage
         break
-      case MessageType.URL_JSON:
-        {
-          const response = await fetchFromURL(result.message)
-          result.parsedMessage = JSON.parse(response) as PropdateMessage
-        }
+      case MessageType.URL_JSON: {
+        const response = await fetchFromURL(result.message)
+        result.parsedMessage = JSON.parse(response) as PropdateMessage
         break
-      case MessageType.URL_TEXT:
-        {
-          const response = await fetchFromURL(result.message)
-          result.parsedMessage = { content: response } as PropdateMessage
-        }
+      }
+      case MessageType.URL_TEXT: {
+        const response = await fetchFromURL(result.message)
+        result.parsedMessage = { content: response } as PropdateMessage
         break
+      }
       default:
         result.parsedMessage = { content: result.message } as PropdateMessage
         break
@@ -143,14 +162,14 @@ async function convertPropdateJsonToObject(
 
     return result
   } catch (error) {
-    console.error('Error parsing JSON:', error)
-    // Return default Attestation object with empty/zero values
+    console.error('Error parsing propdate payload:', error)
+
     return {
-      proposalId: zeroHash,
-      originalMessageId: zeroHash,
-      message: '',
+      message,
       messageType: MessageType.INLINE_TEXT,
-      parsedMessage: { content: '' },
+      originalMessageId,
+      parsedMessage: { content: message },
+      proposalId,
     }
   }
 }
