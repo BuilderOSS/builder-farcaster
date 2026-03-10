@@ -1,6 +1,11 @@
 import { processInvitesCommand } from '@/commands/process/invites'
 import { isInvitesEnabled } from '@/flags'
 import { isAuthorizedCronRequest } from '@/services/cron/auth'
+import {
+  getTargetingOptionsFromEnv,
+  getTargetingOptionsFromQuery,
+  mergeTargetingOptions,
+} from '@/services/testing/targeting'
 
 export const config = {
   runtime: 'nodejs',
@@ -10,6 +15,12 @@ interface ApiRequest {
   method?: string
   headers: {
     authorization?: string
+  }
+  query: {
+    fid?: string | string[]
+    daoId?: string | string[]
+    chain?: string | string[]
+    dryRun?: string | string[]
   }
 }
 
@@ -36,6 +47,10 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
   }
 
   const startedAt = Date.now()
+  const options = mergeTargetingOptions(
+    getTargetingOptionsFromEnv(),
+    getTargetingOptionsFromQuery(req.query),
+  )
 
   if (!isInvitesEnabled()) {
     res.status(200).json({
@@ -43,16 +58,18 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
       job: 'process-invites',
       skipped: true,
       reason: 'Invites are disabled by ENABLE_INVITES flag',
+      options,
       durationMs: Date.now() - startedAt,
     })
     return
   }
 
   try {
-    await processInvitesCommand()
+    await processInvitesCommand(options)
     res.status(200).json({
       ok: true,
       job: 'process-invites',
+      options,
       durationMs: Date.now() - startedAt,
     })
     return

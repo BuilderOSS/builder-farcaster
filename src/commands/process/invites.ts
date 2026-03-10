@@ -1,10 +1,11 @@
 import { getCache, setCache } from '@/cache'
-import { env } from '@/config'
 import { CACHE_MAX_AGE_MS, getFollowerFids, getUserFid } from '@/commands'
+import { env } from '@/config'
 import { logger } from '@/logger'
 import { addToQueue } from '@/queue'
 import { getDAOsTokenOwners } from '@/services/builder/get-daos-token-owners'
 import type { Dao, Owner } from '@/services/builder/types'
+import { TargetingOptions } from '@/services/testing/targeting'
 import { getUserByVerification } from '@/services/warpcast/get-user-by-verification'
 import {
   concat,
@@ -21,12 +22,54 @@ import {
 import { JsonValue } from 'type-fest'
 
 /**
+ * Returns whether a target FID should receive invite processing.
+ * @param fid - Candidate Farcaster ID.
+ * @param options - Optional targeting configuration.
+ * @returns True when invite should be processed for this FID.
+ */
+function shouldProcessInviteFid(
+  fid: number,
+  options: TargetingOptions,
+): boolean {
+  if (!options.targetFids || options.targetFids.length === 0) {
+    return true
+  }
+
+  return options.targetFids.includes(fid)
+}
+
+/**
+ * Filters DAOs according to optional DAO and chain targeting.
+ * @param daos - Candidate DAO list for a FID.
+ * @param options - Optional targeting configuration.
+ * @returns DAOs matching active filters.
+ */
+function filterTargetDaos(daos: Dao[], options: TargetingOptions): Dao[] {
+  return daos.filter((dao) => {
+    if (options.targetDaoIds && options.targetDaoIds.length > 0) {
+      if (!options.targetDaoIds.includes(dao.id.toLowerCase())) {
+        return false
+      }
+    }
+
+    if (options.targetChains && options.targetChains.length > 0) {
+      if (!options.targetChains.includes(dao.chain.name.toLowerCase())) {
+        return false
+      }
+    }
+
+    return true
+  })
+}
+
+/**
  * Handles invitations by fetching DAO owners, mapping them to their respective
  * FIDs, and creating an owner-to-DAO mapping.
+ * @param options - Optional targeting configuration.
  */
-export async function processInvitesCommand() {
+export async function processInvitesCommand(options: TargetingOptions = {}) {
   try {
-    const sortedFidToDaoMap = await getSortedFidToDaoMap()
+    const sortedFidToDaoMap = await getSortedFidToDaoMap(options)
     logger.debug(
       {
         sortedFidToDaoMap,
@@ -49,18 +92,37 @@ export async function processInvitesCommand() {
     )
 
     for (const [fid, daos] of fidDaoEntries) {
-      if (followers.includes(Number(fid))) {
+      const numericFid = Number(fid)
+
+      if (!shouldProcessInviteFid(numericFid, options)) {
         continue
       }
 
-      const sortedDaos = sort(daos, (a, b) => b.ownerCount - a.ownerCount)
+      if (followers.includes(numericFid)) {
+        continue
+      }
 
-      await addToQueue({
-        type: 'invitation',
-        recipient: fid,
-        daos: sortedDaos as unknown as JsonValue,
-      })
-      logger.info({ fid, daos }, 'Invitation added to queue for member')
+      const targetDaos = filterTargetDaos(daos, options)
+      if (targetDaos.length === 0) {
+        continue
+      }
+
+      const sortedDaos = sort(targetDaos, (a, b) => b.ownerCount - a.ownerCount)
+
+      logger.info(
+        { fid, daos: sortedDaos, dryRun: options.dryRun === true },
+        options.dryRun
+          ? 'Dry run: invitation would be added to queue for member'
+          : 'Invitation added to queue for member',
+      )
+
+      if (!options.dryRun) {
+        await addToQueue({
+          type: 'invitation',
+          recipient: numericFid,
+          daos: sortedDaos as unknown as JsonValue,
+        })
+      }
     }
   } catch (error) {
     logger.error(
@@ -78,9 +140,10 @@ export async function processInvitesCommand() {
  * Retrieves a sorted map of FIDs (Federated Identifiers) to DAOs (Decentralized Autonomous Organizations).
  * This method fetches DAOs token owners, groups them by owner address, maps FIDs to DAOs,
  * and finally sorts the map by the number of DAOs associated with each FID.
+ * @param options - Optional targeting configuration.
  * @returns A promise that resolves to an object where the keys are FIDs and the values are arrays of DAOs, sorted by the number of DAOs.
  */
-async function getSortedFidToDaoMap() {
+async function getSortedFidToDaoMap(options: TargetingOptions) {
   const cacheKey = 'sorted_fid_to_dao_map'
   let sortedFidToDaoMap = await getCache<Record<number, Dao[]> | null>(
     cacheKey,
@@ -104,8 +167,10 @@ async function getSortedFidToDaoMap() {
     logger.info('Sorting fidToDaoMap by the number of DAOs')
     sortedFidToDaoMap = sortFidToDaoMap(fidToDaoMap)
 
-    await setCache(cacheKey, sortedFidToDaoMap)
-    logger.info('Sorted FID to DAO map fetched and cached successfully')
+    if (!options.dryRun) {
+      await setCache(cacheKey, sortedFidToDaoMap)
+      logger.info('Sorted FID to DAO map fetched and cached successfully')
+    }
   }
 
   return sortedFidToDaoMap

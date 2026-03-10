@@ -181,7 +181,7 @@ For controlled testing, you can scope processing to specific followers, DAOs, or
   - `TEST_TARGET_DAO_IDS`
   - `TEST_TARGET_CHAINS`
   - `TEST_DRY_RUN`
-- Per-request overrides on proposal/propdate cron endpoints:
+- Per-request overrides on proposal/propdate/invite cron endpoints:
   - `fid` (comma-separated FIDs)
   - `daoId` (comma-separated DAO IDs)
   - `chain` (comma-separated chain names)

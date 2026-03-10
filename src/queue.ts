@@ -137,7 +137,7 @@ export async function retryTask(
     return
   }
 
-  const maxRetries = Number(task.maxRetries ?? DEFAULT_MAX_RETRIES)
+  const maxRetries = Number(task.maxRetries || DEFAULT_MAX_RETRIES)
   const nextRetryCount = task.retries + 1
 
   if (nextRetryCount >= maxRetries) {
