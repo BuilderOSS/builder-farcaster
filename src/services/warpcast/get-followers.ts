@@ -21,7 +21,7 @@ interface Response {
  * @returns - A promise that resolves to an object containing all retrieved users.
  */
 export const getFollowers = async (env: Env, fid: number): Promise<Result> => {
-  const { WARPCAST_AUTH_TOKEN: authToken, WARPCAST_BASE_URL: baseUrl } = env
+  const { WARPCAST_BASE_URL: baseUrl } = env
   let newCursor = ''
   let users: User[] = []
   let response: Response
@@ -34,7 +34,7 @@ export const getFollowers = async (env: Env, fid: number): Promise<Result> => {
     }
     response = await fetchRequest<Response>(
       baseUrl,
-      authToken,
+      undefined,
       HttpRequestMethod.GET,
       '/v2/followers',
       {

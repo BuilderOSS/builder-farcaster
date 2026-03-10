@@ -6661,7 +6661,7 @@ snapshots:
     dependencies:
       '@ethereumjs/tx': 4.2.0
       '@types/debug': 4.1.12
-      debug: 4.3.7
+      debug: 4.4.3
       semver: 7.6.3
       superstruct: 1.0.4
     transitivePeerDependencies:

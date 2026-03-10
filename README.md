@@ -86,7 +86,8 @@ This repository contains the source code for the @builderbot Farcaster bot.
 
    Then configure the following variables:
 
-   - `WARPCAST_AUTH_TOKEN` - Your Warpcast authentication token
+   - `FARCASTER_MNEMONIC` (optional compatibility value)
+   - `BOT_FID` or `BOT_USERNAME` - Bot identity for follower scans
    - `WARPCAST_API_KEY` - Your Warpcast API key
    - `NEXT_PUBLIC_GOLDSKY_PROJECT_ID` (optional) - Goldsky project id override
    - `NEXT_PUBLIC_NETWORK_TYPE` (optional) - set `testnet` to use `dev` subgraph version
@@ -114,7 +115,6 @@ This repository contains the source code for the @builderbot Farcaster bot.
 - `pnpm dev:consume` - Consume notification queue only
 - `pnpm dev:propdates` - Process proposal updates only
 - `pnpm dev:invites` - Process invitations
-- `pnpm dev:tokengen` - Generate Warpcast token
 - `pnpm build` - Build the project
 - `pnpm test` - Run tests
 - `pnpm lint` - Run linting
@@ -213,9 +213,12 @@ NEXT_PUBLIC_GOLDSKY_PROJECT_ID=<goldsky_project_id>
 NEXT_PUBLIC_NETWORK_TYPE=<mainnet_or_testnet>
 
 # Warpcast API
-WARPCAST_BASE_URL=https://api.warpcast.com
+WARPCAST_BASE_URL=https://api.farcaster.xyz
 WARPCAST_API_KEY=<your_api_key>
-WARPCAST_AUTH_TOKEN=<your_auth_token>
+WARPCAST_AUTH_TOKEN=<optional_auth_token>
+FARCASTER_MNEMONIC=<optional_mnemonic>
+BOT_FID=<bot_fid_or_set_bot_username>
+BOT_USERNAME=<bot_username_or_set_bot_fid>
 CRON_SECRET=<shared_cron_secret>
 
 # Feature flags / test targeting

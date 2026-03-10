@@ -1,4 +1,3 @@
-import { getWarpcastAuthToken } from '@/services/warpcast/auth'
 import { fetchRequest, HttpRequestMethod } from '@/services/warpcast/index'
 import { Env, User } from '@/services/warpcast/types'
 
@@ -10,20 +9,25 @@ interface Response {
   result: Result
 }
 
-export const getUserByVerification = async (
+/**
+ * Fetches a Farcaster user by username.
+ * @param env - Environment containing Warpcast/Farcaster API base URL.
+ * @param username - Username to resolve.
+ * @returns The matching user.
+ */
+export const getUserByUsername = async (
   env: Env,
-  address: string,
+  username: string,
 ): Promise<Result> => {
   const { WARPCAST_BASE_URL: baseUrl } = env
-  const authToken = getWarpcastAuthToken(env)
 
   const { result } = await fetchRequest<Response>(
     baseUrl,
-    authToken,
+    undefined,
     HttpRequestMethod.GET,
-    '/v2/user-by-verification',
+    '/v2/user-by-username',
     {
-      params: { address },
+      params: { username },
     },
   )
 

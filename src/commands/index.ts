@@ -5,7 +5,7 @@ import { getDAOsForOwners } from '@/services/builder/get-daos-for-owners'
 import { getProposalData } from '@/services/builder/get-proposal-from-id'
 import { Chain, Proposal } from '@/services/builder/types'
 import { getFollowers } from '@/services/warpcast/get-followers'
-import { getMe } from '@/services/warpcast/get-me'
+import { getUserByUsername } from '@/services/warpcast/get-user-by-username'
 import { getVerifications } from '@/services/warpcast/get-verifications'
 import { Hex } from 'viem'
 
@@ -94,24 +94,37 @@ export async function getFollowerDAOs(follower: number, addresses: string[]) {
 }
 
 /**
- * Retrieves the user's FID (Federated ID). This function first attempts to fetch the
- * FID from a cache. If the FID is not found in the cache, it fetches the FID via
- * the `getMe` function and then stores it in the cache for future requests.
+ * Retrieves the bot FID from explicit env configuration.
+ * Uses BOT_FID directly or resolves BOT_USERNAME via public API.
  * @returns A promise that resolves to the user's FID.
  */
 export async function getUserFid() {
-  const cacheKey = 'user_fid'
-  let fid = await getCache<number | null>(cacheKey, CACHE_MAX_AGE_MS)
+  if (env.BOT_FID) {
+    const configuredFid = Number.parseInt(env.BOT_FID, 10)
+    if (Number.isFinite(configuredFid) && configuredFid > 0) {
+      return configuredFid
+    }
 
-  if (fid) {
-    logger.debug({ fid }, 'User FID fetched from cache')
-  } else {
-    const { user } = await getMe(env)
+    throw new Error('BOT_FID must be a positive integer if set')
+  }
+
+  if (env.BOT_USERNAME) {
+    const cacheKey = `bot_fid_${env.BOT_USERNAME.toLowerCase()}`
+    let fid = await getCache<number | null>(cacheKey, CACHE_MAX_AGE_MS)
+
+    if (fid) {
+      logger.debug({ fid }, 'User FID fetched from cache')
+      return fid
+    }
+
+    const { user } = await getUserByUsername(env, env.BOT_USERNAME)
     fid = user.fid
     await setCache(cacheKey, fid)
     logger.info({ fid }, 'User FID fetched and cached successfully')
+    return fid
   }
-  return fid
+
+  throw new Error('BOT_FID or BOT_USERNAME must be set in environment')
 }
 
 /**

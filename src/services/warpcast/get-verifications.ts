@@ -16,11 +16,11 @@ export const getVerifications = async (
   cursor?: string,
   limit: NonNegative<number> = 25,
 ): Promise<Result> => {
-  const { WARPCAST_AUTH_TOKEN: authToken, WARPCAST_BASE_URL: baseUrl } = env
+  const { WARPCAST_BASE_URL: baseUrl } = env
 
   const { result } = await fetchRequest<Response>(
     baseUrl,
-    authToken,
+    undefined,
     HttpRequestMethod.GET,
     '/v2/verifications',
     {

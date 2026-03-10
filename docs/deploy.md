@@ -21,9 +21,12 @@ DIRECT_URL=<direct_neon_connection_string>
 NEXT_PUBLIC_GOLDSKY_PROJECT_ID=<optional_goldsky_project_id>
 NEXT_PUBLIC_NETWORK_TYPE=<optional_mainnet_or_testnet>
 
-WARPCAST_BASE_URL=https://api.warpcast.com
+WARPCAST_BASE_URL=https://api.farcaster.xyz
 WARPCAST_API_KEY=<your_api_key>
-WARPCAST_AUTH_TOKEN=<your_auth_token>
+WARPCAST_AUTH_TOKEN=<optional_auth_token>
+FARCASTER_MNEMONIC=<optional_mnemonic>
+BOT_FID=<bot_fid_or_set_bot_username>
+BOT_USERNAME=<bot_username_or_set_bot_fid>
 
 CRON_SECRET=<shared_secret>
 ENABLE_INVITES=false
