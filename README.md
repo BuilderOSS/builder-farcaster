@@ -130,58 +130,22 @@ The bot is built with:
 
 ## 🚀 Deployment
 
-The bot uses an automated deployment pipeline with GitHub Actions following Git Flow principles:
+Production deployment is optimized for Vercel + Neon Postgres:
 
-### Branching Strategy
+- **Runtime**: Vercel serverless functions in `api/cron/*`
+- **Scheduling**: Vercel Cron configured in `vercel.json`
+- **Database**: Neon Postgres via Prisma (`DATABASE_URL` + `DIRECT_URL`)
+- **Queue Processing**: Scheduled queue consumer with retry/backoff support
 
-- **`develop`** - Main development branch for ongoing work
-- **`master`** - Production branch for stable releases
-- **`feature/*`** - Feature development branches
-- **`bugfix/*`** - Bug fix branches
-- **`release/*`** - Release preparation branches
-- **`hotfix/*`** - Critical hotfix branches
+### Cron Jobs
 
-### Automated Workflows
+Configured via `vercel.json`:
 
-#### 1. Build Pipeline (`.github/workflows/build.yml`)
+- Process proposals: every hour
+- Process propdates: every hour
+- Consume queue: every minute
 
-Runs on all pushes and pull requests:
-
-- **Build & Test**: Compiles the application and runs tests
-- **Auto Release**: Creates draft releases when changes are pushed to `master`
-- Generates changelogs using `git-cliff`
-- Creates GitHub releases with semantic versioning
-
-#### 2. Git Flow (`.github/workflows/git-flow.yml`)
-
-Automatically creates pull requests for:
-
-- Feature branches → `develop`
-- Bugfix branches → `develop`
-- Release branches → `master`
-- Hotfix branches → `master`
-
-#### 3. Deployment (`.github/workflows/deploy.yml`)
-
-Triggers when a GitHub release is published:
-
-- **Environment Setup**: Creates `.env` file with production variables
-- **Build**: Compiles the application for production
-- **Deploy**: Uses SSH and rsync to deploy to remote server
-- **Database Migration**: Runs Prisma migrations on the server
-- **Cron Jobs**: Sets up automated tasks:
-  - Process proposals: Every hour
-  - Process propdates: Every hour
-  - Consume queue: Every minute
-
-### Production Environment
-
-The bot runs on a remote server with:
-
-- **Automated Processing**: Cron jobs handle proposal processing and queue consumption
-- **Log Management**: Separate logs for each process (`process_proposals.log`, `process_propdates.log`, `consume_queues.log`)
-- **Database Persistence**: SQLite database survives deployments
-- **Zero-downtime Deployment**: Atomic symlink updates
+Each cron endpoint validates `Authorization: Bearer <CRON_SECRET>`.
 
 ### Environment Variables
 
@@ -190,7 +154,8 @@ Production deployment requires these environment variables:
 ```bash
 # Application
 NODE_ENV=production
-DATABASE_URL=file:./prod.db
+DATABASE_URL=<pooled_neon_connection_string>
+DIRECT_URL=<direct_neon_connection_string>
 
 # Nouns Builder Subgraphs
 BUILDER_SUBGRAPH_ETHEREUM_URL=<ethereum_subgraph_url>
@@ -202,13 +167,7 @@ BUILDER_SUBGRAPH_ZORA_URL=<zora_subgraph_url>
 WARPCAST_BASE_URL=https://api.warpcast.com
 WARPCAST_API_KEY=<your_api_key>
 WARPCAST_AUTH_TOKEN=<your_auth_token>
-
-# Deployment (GitHub variables)
-REMOTE_HOST_NAME=<server_ip>
-REMOTE_HOST_USER=<deploy_user>
-REMOTE_HOST_PATH=<deployment_path>
-REMOTE_HOST_NODE=<node_path>
-REMOTE_HOST_PNPM=<pnpm_path>
+CRON_SECRET=<shared_cron_secret>
 ```
 
 ## 📄 License

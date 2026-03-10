@@ -1,13 +1,13 @@
 import { env } from '@/config'
 import { logger } from '@/logger'
-import { completeTask, retryTask } from '@/queue'
+import { claimPendingTasks, completeTask, retryTask } from '@/queue'
 import { Dao, Propdate, Proposal } from '@/services/builder/types'
 import { sendDirectCast } from '@/services/warpcast/send-direct-cast'
 import { isPast, toRelativeTime } from '@/utils'
-import { PrismaClient } from '@prisma/client'
 import sha256 from 'crypto-js/sha256'
 import { uniqueBy } from 'remeda'
 import removeMd from 'remove-markdown'
+import { v4 as uuidv4 } from 'uuid'
 
 type TaskData = {
   type: 'notification' | 'test' | 'invitation'
@@ -98,7 +98,10 @@ function formatPropdateMessage(propdate: Propdate, proposal: Proposal): string {
  * @param data - The data associated with the notification task.
  * @returns Resolves when the notification has been successfully handled.
  */
-async function handleNotification(taskId: string, data: NotificationData) {
+async function handleNotification(
+  taskId: string,
+  data: NotificationData,
+): Promise<boolean> {
   try {
     const { recipient, proposal, propdate } = data
     let message: string | undefined
@@ -118,7 +121,10 @@ async function handleNotification(taskId: string, data: NotificationData) {
     }
 
     logger.info({ recipient, result }, 'Direct cast sent successfully.')
+    return true
   } catch (error) {
+    const reason = error instanceof Error ? error.message : String(error)
+
     if (error instanceof Error) {
       logger.error(
         { message: error.message, stack: error.stack },
@@ -128,7 +134,8 @@ async function handleNotification(taskId: string, data: NotificationData) {
       logger.error({ error }, 'Unknown error occurred')
     }
 
-    await retryTask(taskId)
+    await retryTask(taskId, reason)
+    return false
   }
 }
 
@@ -138,7 +145,10 @@ async function handleNotification(taskId: string, data: NotificationData) {
  * @param data - The data associated with the invitation task.
  * @returns Resolves when the invitation has been successfully handled.
  */
-async function handleInvitation(taskId: string, data: InvitationData) {
+async function handleInvitation(
+  taskId: string,
+  data: InvitationData,
+): Promise<boolean> {
   try {
     const { recipient, daos } = data
     const uniqueDaos = uniqueBy(daos, (dao) => dao.name)
@@ -165,7 +175,10 @@ async function handleInvitation(taskId: string, data: InvitationData) {
     }
 
     logger.info({ recipient, result }, 'Invitation sent successfully.')
+    return true
   } catch (error) {
+    const reason = error instanceof Error ? error.message : String(error)
+
     if (error instanceof Error) {
       logger.error(
         { message: error.message, stack: error.stack },
@@ -175,7 +188,8 @@ async function handleInvitation(taskId: string, data: InvitationData) {
       logger.error({ error }, 'Unknown error occurred')
     }
 
-    await retryTask(taskId)
+    await retryTask(taskId, reason)
+    return false
   }
 }
 
@@ -189,13 +203,9 @@ async function handleInvitation(taskId: string, data: InvitationData) {
  */
 export const queueConsumeCommand = async (limit?: number) => {
   try {
-    const prisma = new PrismaClient()
-
-    const tasks = await prisma.queue.findMany({
-      where: { status: 'pending' },
-      orderBy: { timestamp: 'asc' },
-      take: limit,
-    })
+    const workerId = `consumer-${uuidv4()}`
+    const safeLimit = Number.isFinite(limit) && limit && limit > 0 ? limit : 10
+    const tasks = await claimPendingTasks(safeLimit, workerId)
 
     if (tasks.length <= 0) {
       logger.warn('No pending tasks available. Waiting...')
@@ -203,24 +213,34 @@ export const queueConsumeCommand = async (limit?: number) => {
     }
 
     for (const task of tasks) {
-      logger.info({ taskId: task.taskId }, 'Processing task')
+      logger.info({ taskId: task.taskId, workerId }, 'Processing task')
 
-      const taskData = JSON.parse(task.data) as TaskData
+      const taskData = task.data as TaskData
+      let handledSuccessfully = false
 
       switch (taskData.type) {
         case 'notification':
-          await handleNotification(task.taskId, taskData as NotificationData)
+          handledSuccessfully = await handleNotification(
+            task.taskId,
+            taskData as NotificationData,
+          )
           break
         case 'invitation':
-          await handleInvitation(task.taskId, taskData as InvitationData)
+          handledSuccessfully = await handleInvitation(
+            task.taskId,
+            taskData as InvitationData,
+          )
           break
         default:
           logger.error({ task }, 'Unknown task type')
+          await retryTask(task.taskId, `Unknown task type: ${taskData.type}`)
           break
       }
 
-      await completeTask(task.taskId)
-      logger.info({ taskId: task.taskId }, 'Task marked as completed')
+      if (handledSuccessfully) {
+        await completeTask(task.taskId)
+        logger.info({ taskId: task.taskId }, 'Task marked as completed')
+      }
     }
   } catch (error) {
     logger.error({ error }, 'Error while processing the queue')
