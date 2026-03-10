@@ -8,14 +8,70 @@ import {
 import { logger } from '@/logger'
 import { addToQueue } from '@/queue'
 import { getActiveProposals } from '@/services/builder/get-active-proposals'
+import { TargetingOptions } from '@/services/testing/targeting'
 import { DateTime } from 'luxon'
 import { filter, pipe } from 'remeda'
 import { JsonValue } from 'type-fest'
 
+interface ProposalTargetInput {
+  dao: {
+    id: string
+    chain: {
+      name: string
+    }
+  }
+}
+
+/**
+ * Checks whether the follower should be processed based on targeting options.
+ * @param follower - Farcaster follower FID.
+ * @param options - Optional targeting configuration.
+ * @returns True when this follower should be processed.
+ */
+function shouldProcessFollower(
+  follower: number,
+  options: TargetingOptions,
+): boolean {
+  if (!options.targetFids || options.targetFids.length === 0) {
+    return true
+  }
+
+  return options.targetFids.includes(follower)
+}
+
+/**
+ * Checks whether a proposal matches test targeting filters.
+ * @param proposal - Proposal with chain and DAO metadata.
+ * @param options - Optional targeting configuration.
+ * @returns True when proposal matches active filters.
+ */
+function matchesProposalTargets(
+  proposal: ProposalTargetInput,
+  options: TargetingOptions,
+): boolean {
+  const daoId = proposal.dao.id.toLowerCase()
+  const chainName = proposal.dao.chain.name.toLowerCase()
+
+  if (options.targetDaoIds && options.targetDaoIds.length > 0) {
+    if (!options.targetDaoIds.includes(daoId)) {
+      return false
+    }
+  }
+
+  if (options.targetChains && options.targetChains.length > 0) {
+    if (!options.targetChains.includes(chainName)) {
+      return false
+    }
+  }
+
+  return true
+}
+
 /**
  * Handles proposals that are pending for voting and sends notifications.
+ * @param options - Optional targeting configuration.
  */
-async function handleVotingProposals() {
+async function handleVotingProposals(options: TargetingOptions) {
   try {
     logger.info('Fetching active proposals...')
     const { proposals } = await getActiveProposals()
@@ -26,6 +82,10 @@ async function handleVotingProposals() {
 
     // Filter proposals where voting has not started yet
     const votingProposals = filter(proposals, (proposal) => {
+      if (!matchesProposalTargets(proposal, options)) {
+        return false
+      }
+
       const voteStartTimestamp = Number(proposal.voteStart)
       const voteEndTimestamp = Number(proposal.voteEnd)
       logger.debug(
@@ -54,6 +114,10 @@ async function handleVotingProposals() {
     logger.info({ followerCount: followers.length }, 'Follower FIDs retrieved.')
 
     for (const follower of followers) {
+      if (!shouldProcessFollower(follower, options)) {
+        continue
+      }
+
       logger.debug({ follower }, 'Processing follower.')
       // Retrieve the ethereum addresses associated with the current follower
       let addresses = await getFollowerAddresses(follower)
@@ -137,13 +201,17 @@ async function handleVotingProposals() {
         // Add the proposal to the queue for notifications
         logger.info(
           { proposalId: proposal.id, follower },
-          'Adding proposal to notification queue.',
+          options.dryRun
+            ? 'Dry run: proposal would be added to notification queue.'
+            : 'Adding proposal to notification queue.',
         )
-        await addToQueue({
-          type: 'notification',
-          recipient: follower,
-          proposal: proposal as unknown as JsonValue,
-        })
+        if (!options.dryRun) {
+          await addToQueue({
+            type: 'notification',
+            recipient: follower,
+            proposal: proposal as unknown as JsonValue,
+          })
+        }
 
         // Mark this proposal as notified
         notifiedProposalsSet.add(proposal.id)
@@ -158,7 +226,9 @@ async function handleVotingProposals() {
         { cacheKey, notifiedProposals: Array.from(notifiedProposalsSet) },
         'Updating cache with notified proposals.',
       )
-      await setCache(cacheKey, Array.from(notifiedProposalsSet))
+      if (!options.dryRun) {
+        await setCache(cacheKey, Array.from(notifiedProposalsSet))
+      }
     }
   } catch (error) {
     if (error instanceof Error) {
@@ -174,8 +244,9 @@ async function handleVotingProposals() {
 
 /**
  * Handles proposals that are ending soon and sends notifications.
+ * @param options - Optional targeting configuration.
  */
-async function handleEndingProposals() {
+async function handleEndingProposals(options: TargetingOptions) {
   try {
     logger.info('Fetching active proposals ending soon...')
     const { proposals } = await getActiveProposals()
@@ -186,6 +257,10 @@ async function handleEndingProposals() {
 
     // Filter proposals where voting is ending soon
     const endingProposals = filter(proposals, (proposal) => {
+      if (!matchesProposalTargets(proposal, options)) {
+        return false
+      }
+
       const voteEndTimestamp = Number(proposal.voteEnd)
       logger.debug(
         { proposalId: proposal.id, voteEndTimestamp },
@@ -213,6 +288,10 @@ async function handleEndingProposals() {
     logger.info({ followerCount: followers.length }, 'Follower FIDs retrieved.')
 
     for (const follower of followers) {
+      if (!shouldProcessFollower(follower, options)) {
+        continue
+      }
+
       logger.debug({ follower }, 'Processing follower.')
       // Retrieve the ethereum addresses associated with the current follower
       let addresses = await getFollowerAddresses(follower)
@@ -296,13 +375,17 @@ async function handleEndingProposals() {
         // Add the proposal to the queue for notifications
         logger.info(
           { proposalId: proposal.id, follower },
-          'Adding proposal to notification queue.',
+          options.dryRun
+            ? 'Dry run: proposal would be added to notification queue.'
+            : 'Adding proposal to notification queue.',
         )
-        await addToQueue({
-          type: 'notification',
-          recipient: follower,
-          proposal: proposal as unknown as JsonValue,
-        })
+        if (!options.dryRun) {
+          await addToQueue({
+            type: 'notification',
+            recipient: follower,
+            proposal: proposal as unknown as JsonValue,
+          })
+        }
 
         // Mark this proposal as notified
         notifiedProposalsSet.add(proposal.id)
@@ -317,7 +400,9 @@ async function handleEndingProposals() {
         { cacheKey, notifiedProposals: Array.from(notifiedProposalsSet) },
         'Updating cache with notified proposals.',
       )
-      await setCache(cacheKey, Array.from(notifiedProposalsSet))
+      if (!options.dryRun) {
+        await setCache(cacheKey, Array.from(notifiedProposalsSet))
+      }
     }
   } catch (error) {
     if (error instanceof Error) {
@@ -336,8 +421,9 @@ async function handleEndingProposals() {
  * This function triggers notifications for proposals that are currently active.
  * It ensures that notifications for voting proposals are processed first, followed
  * by ending proposals.
+ * @param options - Optional targeting configuration.
  */
-export async function processProposalsCommand() {
-  await handleVotingProposals()
-  await handleEndingProposals()
+export async function processProposalsCommand(options: TargetingOptions = {}) {
+  await handleVotingProposals(options)
+  await handleEndingProposals(options)
 }

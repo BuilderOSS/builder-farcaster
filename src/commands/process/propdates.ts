@@ -9,18 +9,48 @@ import {
 import { logger } from '@/logger'
 import { addToQueue } from '@/queue'
 import { getPropdateAttestations } from '@/services/eas/get-propdate-attestations'
+import { TargetingOptions } from '@/services/testing/targeting'
 import { filter, pipe } from 'remeda'
 import { JsonValue } from 'type-fest'
 
 /**
+ * Checks whether the follower should be processed based on targeting options.
+ * @param follower - Farcaster follower FID.
+ * @param options - Optional targeting configuration.
+ * @returns True when this follower should be processed.
+ */
+function shouldProcessFollower(
+  follower: number,
+  options: TargetingOptions,
+): boolean {
+  if (!options.targetFids || options.targetFids.length === 0) {
+    return true
+  }
+
+  return options.targetFids.includes(follower)
+}
+
+/**
  * Processes new proposal updates and sends notifications to relevant followers
+ * @param options - Optional targeting configuration.
  * @returns A promise that resolves when all updates have been processed
  * @throws Error if there's an issue fetching or processing updates
  */
-async function handleProposalUpdates() {
+async function handleProposalUpdates(options: TargetingOptions) {
   try {
     logger.info('Fetching new propdates...')
-    const { propdates } = await getPropdateAttestations()
+    const { propdates: fetchedPropdates } = await getPropdateAttestations()
+    const propdates = filter(fetchedPropdates, (propdate) => {
+      if (options.targetChains && options.targetChains.length > 0) {
+        const chainName = propdate.chain.name.toLowerCase()
+        if (!options.targetChains.includes(chainName)) {
+          return false
+        }
+      }
+
+      return true
+    })
+
     logger.info({ propdates }, 'New propdates retrieved.')
 
     const userFid = await getUserFid()
@@ -28,6 +58,10 @@ async function handleProposalUpdates() {
     const followers = await getFollowerFids(userFid)
     logger.info({ followerCount: followers.length }, 'Follower FIDs retrieved.')
     for (const follower of followers) {
+      if (!shouldProcessFollower(follower, options)) {
+        continue
+      }
+
       logger.debug({ follower }, 'Processing follower.')
       // Retrieve the ethereum addresses associated with the current follower
       let addresses = await getFollowerAddresses(follower)
@@ -112,6 +146,14 @@ async function handleProposalUpdates() {
           continue
         }
 
+        if (
+          options.targetDaoIds &&
+          options.targetDaoIds.length > 0 &&
+          !options.targetDaoIds.includes(proposal.dao.id.toLowerCase())
+        ) {
+          continue
+        }
+
         // If the proposal's DAO ID is not in the list of DAOs for the current follower, skip to the next update
         if (!daos.includes(proposal.dao.id)) {
           logger.debug(
@@ -145,14 +187,18 @@ async function handleProposalUpdates() {
             proposalId: propdate.proposalId,
             follower,
           },
-          'Adding proposal update to notification queue.',
+          options.dryRun
+            ? 'Dry run: proposal update would be added to notification queue.'
+            : 'Adding proposal update to notification queue.',
         )
-        await addToQueue({
-          type: 'notification',
-          recipient: follower,
-          propdate: propdate as unknown as JsonValue,
-          proposal: proposal as unknown as JsonValue,
-        })
+        if (!options.dryRun) {
+          await addToQueue({
+            type: 'notification',
+            recipient: follower,
+            propdate: propdate as unknown as JsonValue,
+            proposal: proposal as unknown as JsonValue,
+          })
+        }
 
         // Mark this update as notified
         notifiedUpdatesSet.add(propdate.id)
@@ -171,7 +217,9 @@ async function handleProposalUpdates() {
         { cacheKey, notifiedProposals: Array.from(notifiedUpdatesSet) },
         'Updating cache with notified proposals.',
       )
-      await setCache(cacheKey, Array.from(notifiedUpdatesSet))
+      if (!options.dryRun) {
+        await setCache(cacheKey, Array.from(notifiedUpdatesSet))
+      }
     }
   } catch (error) {
     if (error instanceof Error) {
@@ -190,7 +238,8 @@ async function handleProposalUpdates() {
  * Handles notifications for new proposal updates
  *
  * This function triggers notifications for proposal updates that are currently active.
+ * @param options - Optional targeting configuration.
  */
-export async function processUpdates() {
-  await handleProposalUpdates()
+export async function processUpdates(options: TargetingOptions = {}) {
+  await handleProposalUpdates(options)
 }

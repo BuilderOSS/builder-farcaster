@@ -1,5 +1,10 @@
 import { processProposalsCommand } from '@/commands/process/proposals'
 import { isAuthorizedCronRequest } from '@/services/cron/auth'
+import {
+  getTargetingOptionsFromEnv,
+  getTargetingOptionsFromQuery,
+  mergeTargetingOptions,
+} from '@/services/testing/targeting'
 
 export const config = {
   runtime: 'nodejs',
@@ -9,6 +14,12 @@ interface ApiRequest {
   method?: string
   headers: {
     authorization?: string
+  }
+  query: {
+    fid?: string | string[]
+    daoId?: string | string[]
+    chain?: string | string[]
+    dryRun?: string | string[]
   }
 }
 
@@ -35,12 +46,17 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
   }
 
   const startedAt = Date.now()
+  const options = mergeTargetingOptions(
+    getTargetingOptionsFromEnv(),
+    getTargetingOptionsFromQuery(req.query),
+  )
 
   try {
-    await processProposalsCommand()
+    await processProposalsCommand(options)
     res.status(200).json({
       ok: true,
       job: 'process-proposals',
+      options,
       durationMs: Date.now() - startedAt,
     })
     return

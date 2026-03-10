@@ -172,6 +172,28 @@ Invite processing is controlled by `ENABLE_INVITES` and is disabled by default.
 - Health endpoint: `GET /api/health`
 - Includes queue depth metrics (`pending`, `processing`, `failed`, `completedLast24h`)
 
+### Targeted Test Runs
+
+For controlled testing, you can scope processing to specific followers, DAOs, or chains.
+
+- Environment-based filters:
+  - `TEST_TARGET_FIDS`
+  - `TEST_TARGET_DAO_IDS`
+  - `TEST_TARGET_CHAINS`
+  - `TEST_DRY_RUN`
+- Per-request overrides on proposal/propdate cron endpoints:
+  - `fid` (comma-separated FIDs)
+  - `daoId` (comma-separated DAO IDs)
+  - `chain` (comma-separated chain names)
+  - `dryRun` (`true` or `false`)
+
+Example:
+
+```bash
+curl -H "Authorization: Bearer <CRON_SECRET>" \
+  "https://<your-app-domain>/api/cron/process-proposals?fid=1234&daoId=0xabc...&dryRun=true"
+```
+
 ### Environment Variables
 
 Production deployment requires these environment variables:
