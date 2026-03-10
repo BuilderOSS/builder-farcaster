@@ -144,8 +144,14 @@ Configured via `vercel.json`:
 - Process proposals: every hour
 - Process propdates: every hour
 - Consume queue: every minute
+- Cleanup cache and old queue rows: daily
 
 Each cron endpoint validates `Authorization: Bearer <CRON_SECRET>`.
+
+### Runtime Health
+
+- Health endpoint: `GET /api/health`
+- Includes queue depth metrics (`pending`, `processing`, `failed`, `completedLast24h`)
 
 ### Environment Variables
 
