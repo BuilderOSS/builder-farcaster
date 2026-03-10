@@ -108,7 +108,7 @@ async function handleVotingProposals(options: TargetingOptions) {
       'Active proposals fetched successfully',
     )
 
-    const userFid = await getUserFid()
+    const userFid = getUserFid()
     logger.debug({ userFid }, 'User FID retrieved.')
     const followers = await getFollowerFids(userFid)
     logger.info({ followerCount: followers.length }, 'Follower FIDs retrieved.')
@@ -282,7 +282,7 @@ async function handleEndingProposals(options: TargetingOptions) {
       'Ending proposals fetched successfully',
     )
 
-    const userFid = await getUserFid()
+    const userFid = getUserFid()
     logger.debug({ userFid }, 'User FID retrieved.')
     const followers = await getFollowerFids(userFid)
     logger.info({ followerCount: followers.length }, 'Follower FIDs retrieved.')

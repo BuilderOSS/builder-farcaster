@@ -19,8 +19,7 @@ Fill in at least:
 - `NODE_ENV=development`
 - `DATABASE_URL` and `DIRECT_URL` (Postgres)
 - `WARPCAST_BASE_URL`, `WARPCAST_API_KEY`
-- `BOT_FID` or `BOT_USERNAME` (recommended)
-- `FARCASTER_MNEMONIC` (optional compatibility value)
+- `FARCASTER_APP_FID`, `FARCASTER_APP_KEY`, `FARCASTER_APP_KEY_PUBLIC`
 - `NEXT_PUBLIC_GOLDSKY_PROJECT_ID` (optional)
 - `NEXT_PUBLIC_NETWORK_TYPE` (optional)
 - `CRON_SECRET`

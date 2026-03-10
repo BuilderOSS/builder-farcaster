@@ -23,10 +23,9 @@ NEXT_PUBLIC_NETWORK_TYPE=<optional_mainnet_or_testnet>
 
 WARPCAST_BASE_URL=https://api.farcaster.xyz
 WARPCAST_API_KEY=<your_api_key>
-WARPCAST_AUTH_TOKEN=<optional_auth_token>
-FARCASTER_MNEMONIC=<optional_mnemonic>
-BOT_FID=<bot_fid_or_set_bot_username>
-BOT_USERNAME=<bot_username_or_set_bot_fid>
+FARCASTER_APP_FID=<app_fid>
+FARCASTER_APP_KEY=<ed25519_private_key_hex>
+FARCASTER_APP_KEY_PUBLIC=<ed25519_public_key_hex>
 
 CRON_SECRET=<shared_secret>
 ENABLE_INVITES=false

@@ -86,8 +86,7 @@ This repository contains the source code for the @builderbot Farcaster bot.
 
    Then configure the following variables:
 
-   - `FARCASTER_MNEMONIC` (optional compatibility value)
-   - `BOT_FID` or `BOT_USERNAME` - Bot identity for follower scans
+   - `FARCASTER_APP_FID`, `FARCASTER_APP_KEY`, `FARCASTER_APP_KEY_PUBLIC` - App-key auth and bot identity
    - `WARPCAST_API_KEY` - Your Warpcast API key
    - `NEXT_PUBLIC_GOLDSKY_PROJECT_ID` (optional) - Goldsky project id override
    - `NEXT_PUBLIC_NETWORK_TYPE` (optional) - set `testnet` to use `dev` subgraph version
@@ -215,10 +214,9 @@ NEXT_PUBLIC_NETWORK_TYPE=<mainnet_or_testnet>
 # Warpcast API
 WARPCAST_BASE_URL=https://api.farcaster.xyz
 WARPCAST_API_KEY=<your_api_key>
-WARPCAST_AUTH_TOKEN=<optional_auth_token>
-FARCASTER_MNEMONIC=<optional_mnemonic>
-BOT_FID=<bot_fid_or_set_bot_username>
-BOT_USERNAME=<bot_username_or_set_bot_fid>
+FARCASTER_APP_FID=<app_fid>
+FARCASTER_APP_KEY=<ed25519_private_key_hex>
+FARCASTER_APP_KEY_PUBLIC=<ed25519_public_key_hex>
 CRON_SECRET=<shared_cron_secret>
 
 # Feature flags / test targeting

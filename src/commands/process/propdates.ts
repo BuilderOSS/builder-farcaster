@@ -53,7 +53,7 @@ async function handleProposalUpdates(options: TargetingOptions) {
 
     logger.info({ propdates }, 'New propdates retrieved.')
 
-    const userFid = await getUserFid()
+    const userFid = getUserFid()
     logger.debug({ userFid }, 'User FID retrieved.')
     const followers = await getFollowerFids(userFid)
     logger.info({ followerCount: followers.length }, 'Follower FIDs retrieved.')

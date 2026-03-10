@@ -73,7 +73,7 @@ function decodeMnemonicInput(value: string): string {
  * @returns Positive integer FID.
  */
 async function promptFid(): Promise<number> {
-  const defaultFid = env.BOT_FID ?? ''
+  const defaultFid = env.FARCASTER_APP_FID
   const response = await input({
     default: defaultFid,
     message: 'Enter FID for signer request (bot/account FID):',

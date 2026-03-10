@@ -1,12 +1,11 @@
 import { NonNegative } from 'type-fest'
 
 export interface Env {
-  WARPCAST_AUTH_TOKEN?: string
   WARPCAST_API_KEY: string
   WARPCAST_BASE_URL: string
-  FARCASTER_MNEMONIC?: string
-  BOT_FID?: string
-  BOT_USERNAME?: string
+  FARCASTER_APP_FID?: string
+  FARCASTER_APP_KEY?: string
+  FARCASTER_APP_KEY_PUBLIC?: string
 }
 
 export interface Like {

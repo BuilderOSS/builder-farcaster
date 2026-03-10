@@ -5,7 +5,6 @@ import { getDAOsForOwners } from '@/services/builder/get-daos-for-owners'
 import { getProposalData } from '@/services/builder/get-proposal-from-id'
 import { Chain, Proposal } from '@/services/builder/types'
 import { getFollowers } from '@/services/warpcast/get-followers'
-import { getUserByUsername } from '@/services/warpcast/get-user-by-username'
 import { getVerifications } from '@/services/warpcast/get-verifications'
 import { Hex } from 'viem'
 
@@ -94,37 +93,21 @@ export async function getFollowerDAOs(follower: number, addresses: string[]) {
 }
 
 /**
- * Retrieves the bot FID from explicit env configuration.
- * Uses BOT_FID directly or resolves BOT_USERNAME via public API.
- * @returns A promise that resolves to the user's FID.
+ * Retrieves the bot FID from FARCASTER_APP_FID.
+ * @returns The configured bot FID.
  */
-export async function getUserFid() {
-  if (env.BOT_FID) {
-    const configuredFid = Number.parseInt(env.BOT_FID, 10)
-    if (Number.isFinite(configuredFid) && configuredFid > 0) {
-      return configuredFid
-    }
-
-    throw new Error('BOT_FID must be a positive integer if set')
+export function getUserFid() {
+  if (!env.FARCASTER_APP_FID) {
+    throw new Error('FARCASTER_APP_FID must be set in environment')
   }
 
-  if (env.BOT_USERNAME) {
-    const cacheKey = `bot_fid_${env.BOT_USERNAME.toLowerCase()}`
-    let fid = await getCache<number | null>(cacheKey, CACHE_MAX_AGE_MS)
+  const fid = Number.parseInt(env.FARCASTER_APP_FID, 10)
 
-    if (fid) {
-      logger.debug({ fid }, 'User FID fetched from cache')
-      return fid
-    }
-
-    const { user } = await getUserByUsername(env, env.BOT_USERNAME)
-    fid = user.fid
-    await setCache(cacheKey, fid)
-    logger.info({ fid }, 'User FID fetched and cached successfully')
-    return fid
+  if (!Number.isFinite(fid) || fid <= 0) {
+    throw new Error('FARCASTER_APP_FID must be a positive integer')
   }
 
-  throw new Error('BOT_FID or BOT_USERNAME must be set in environment')
+  return fid
 }
 
 /**

@@ -79,7 +79,7 @@ export async function processInvitesCommand(options: TargetingOptions = {}) {
     )
 
     // Retrieve all followers once (assuming there's a shared user fid cacheable by getUserFid)
-    const followers = await getFollowerFids(await getUserFid())
+    const followers = await getFollowerFids(getUserFid())
     logger.debug(
       { followersCount: followers.length },
       'Followers retrieved successfully',

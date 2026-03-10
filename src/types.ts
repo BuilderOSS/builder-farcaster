@@ -8,9 +8,8 @@ export type Env = BuilderEnv &
     CRON_SECRET?: string
     ENABLE_TESTNET_CHAINS?: string
     NO_SEND_NOTIFICATIONS?: string
-    WARPCAST_AUTH_TOKEN?: string
-    FARCASTER_MNEMONIC?: string
-    BOT_FID?: string
-    BOT_USERNAME?: string
+    FARCASTER_APP_FID?: string
+    FARCASTER_APP_KEY?: string
+    FARCASTER_APP_KEY_PUBLIC?: string
     NODE_ENV: 'development' | 'production' | 'test'
   }
