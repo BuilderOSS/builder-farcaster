@@ -19,6 +19,9 @@ importers:
       '@inquirer/prompts':
         specifier: 7.1.0
         version: 7.1.0(@types/node@22.9.1)
+      '@noble/ed25519':
+        specifier: 2.3.0
+        version: 2.3.0
       '@prisma/client':
         specifier: 5.22.0
         version: 5.22.0(prisma@5.22.0)
@@ -926,6 +929,12 @@ packages:
         integrity: sha512-gbKGcRUYIjA3/zCCNaWDciTMFI0dCkvou3TL8Zmy5Nc7sJ47a0jtOeZoTaMxkuqRo9cRhjOdZJXegxYE5FN/xw==,
       }
     engines: { node: ^14.21.3 || >=16 }
+
+  '@noble/ed25519@2.3.0':
+    resolution:
+      {
+        integrity: sha512-M7dvXL2B92/M7dw9+gzuydL8qn/jiqNHaoR3Q+cb1q1GHV7uwE17WCyFMG+Y+TZb5izcaXk5TdJRrDUxHXL78A==,
+      }
 
   '@noble/hashes@1.4.0':
     resolution:
@@ -6722,6 +6731,8 @@ snapshots:
   '@noble/curves@1.9.7':
     dependencies:
       '@noble/hashes': 1.8.0
+
+  '@noble/ed25519@2.3.0': {}
 
   '@noble/hashes@1.4.0': {}
 

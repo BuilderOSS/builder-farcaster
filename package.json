@@ -28,6 +28,7 @@
     "@buildeross/constants": "0.2.2",
     "@buildeross/types": "0.2.2",
     "@inquirer/prompts": "7.1.0",
+    "@noble/ed25519": "2.3.0",
     "@prisma/client": "5.22.0",
     "canonicalize": "2.0.0",
     "commander": "12.1.0",
