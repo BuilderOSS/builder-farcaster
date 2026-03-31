@@ -2,6 +2,7 @@ import { processInvitesCommand } from '@/commands/process/invites'
 import { processProposalsCommand } from '@/commands/process/proposals'
 import { queueConsumeCommand } from '@/commands/queues/consume'
 import { warpcastToken } from '@/commands/warpcast/token'
+import { getTargetingOptionsFromEnv } from '@/services/testing/targeting'
 import { Command } from 'commander'
 import packageJson from '../package.json'
 import { processUpdates } from './commands/process/propdates'
@@ -24,19 +25,25 @@ const processCommand = program
 processCommand
   .command('proposals')
   .description('Process proposals from API and enqueue tasks')
-  .action(processProposalsCommand)
+  .action(async () => {
+    await processProposalsCommand(getTargetingOptionsFromEnv())
+  })
 
 // Register the 'propdates' sub-command under 'process'
 processCommand
   .command('propdates')
   .description('Process proposals updates from API and enqueue tasks')
-  .action(processUpdates)
+  .action(async () => {
+    await processUpdates(getTargetingOptionsFromEnv())
+  })
 
 // Register the 'invites' sub-command under 'process'
 processCommand
   .command('invites')
   .description('Process invitations')
-  .action(processInvitesCommand)
+  .action(async () => {
+    await processInvitesCommand(getTargetingOptionsFromEnv())
+  })
 
 // Register the 'queues' command
 const queueCommand = program
