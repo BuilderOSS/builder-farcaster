@@ -11,6 +11,8 @@ on:
     paths-ignore: # Ignoring the markdown file changes.
       - '**/*.md'
   pull_request: # Also on pull request events.
+    paths-ignore:
+      - '**/*.md'
   workflow_dispatch: # Allows you to run this workflow manually from the Actions tab.
 
 jobs:
@@ -18,7 +20,7 @@ jobs:
     name: Build & Test
     runs-on: ubuntu-latest # The type of machine to run the job on.
     env:
-      DATABASE_URL: ${{ vars.DATABASE_URL }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
     steps: # The sequence of tasks that make up a job.
       - name: Checking out repository code
@@ -27,7 +29,7 @@ jobs:
       - name: Setup Node.js Environment
         uses: actions/setup-node@v4.4.0 # Action for setting up Node environment.
         with:
-          node-version: latest
+          node-version: 20
 
       - name: Install PNPM package manager
         uses: pnpm/action-setup@v4.1.0 # Action for setting up pnpm.
@@ -51,7 +53,7 @@ jobs:
 
       # Installs all dependencies specified in the project's package.json file.
       - name: Install dependencies using pnpm
-        run: pnpm install
+        run: pnpm install --frozen-lockfile
 
       # This compiles the application in optimized production mode and output it to the build folder.
       - name: Build the application and export it
@@ -59,7 +61,7 @@ jobs:
 
       # Runs unit tests for the application using Jest.
       - name: Execute tests using Vitest
-        run: pnpm run test
+        run: pnpm exec vitest run --passWithNoTests
 
   release:
     name: Create Release

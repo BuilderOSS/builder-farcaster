@@ -16,7 +16,9 @@ jobs:
     # Specifies the runner environment, using the latest Ubuntu
     runs-on: ubuntu-latest
     name: Create Pull Request
-    permissions: write-all
+    permissions:
+      contents: write
+      pull-requests: write
 
     # Steps are individual tasks that run commands in a job
     steps:
@@ -26,7 +28,7 @@ jobs:
 
       # This step uses the Git Flow Action to create PRs based on branch types
       - name: Execute Git Flow Action
-        uses: nekofar/git-flow-action@develop # Specifies the Git Flow Action to use and the branch
+        uses: nekofar/git-flow-action@c676f7da45d4ab597d5c21f8da2bc31a41f12842 # Pin to immutable commit
         with:
           # The GitHub Token for authentication with GitHub API
           github-token: ${{ secrets.PAT_TOKEN }}
