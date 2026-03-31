@@ -7,6 +7,7 @@ import {
 } from '@/commands'
 import { logger } from '@/logger'
 import { addToQueue } from '@/queue'
+import { Proposal } from '@/services/builder/types'
 import { getPropdateAttestations } from '@/services/eas/get-propdate-attestations'
 import { TargetingOptions } from '@/services/testing/targeting'
 import { filter } from 'remeda'
@@ -27,6 +28,51 @@ function shouldProcessFollower(
   }
 
   return options.targetFids.includes(follower)
+}
+
+/**
+ * Builds a stable proposal lookup key.
+ * @param chainId - Chain identifier.
+ * @param proposalId - Proposal id.
+ * @returns Stable key for map lookups.
+ */
+function getProposalKey(chainId: number, proposalId: string): string {
+  return `${chainId.toString()}:${proposalId.toLowerCase()}`
+}
+
+/**
+ * Prefetches proposals needed for propdates processing.
+ * @param proposalRefs - Proposal refs with chain id and proposal id.
+ * @returns Map of proposal key to proposal payload.
+ */
+async function buildProposalLookup(
+  proposalRefs: {
+    chain: { id: number }
+    proposalId: string
+  }[],
+): Promise<Map<string, Proposal | null | undefined>> {
+  const uniqueRefs = new Map<string, (typeof proposalRefs)[number]>()
+
+  for (const proposalRef of proposalRefs) {
+    const proposalKey = getProposalKey(
+      proposalRef.chain.id,
+      proposalRef.proposalId,
+    )
+    if (!uniqueRefs.has(proposalKey)) {
+      uniqueRefs.set(proposalKey, proposalRef)
+    }
+  }
+
+  const proposalLookup = new Map<string, Proposal | null | undefined>()
+  for (const [proposalKey, proposalRef] of uniqueRefs) {
+    const proposal = await getProposalFromId(
+      proposalRef.chain,
+      proposalRef.proposalId,
+    )
+    proposalLookup.set(proposalKey, proposal)
+  }
+
+  return proposalLookup
 }
 
 /**
@@ -52,16 +98,40 @@ async function handleProposalUpdates(options: TargetingOptions) {
 
     logger.info({ propdates }, 'New propdates retrieved.')
 
+    const proposalLookup = await buildProposalLookup(
+      propdates.map((propdate) => ({
+        chain: propdate.chain,
+        proposalId: propdate.proposalId,
+      })),
+    )
+    logger.info(
+      { proposalLookupCount: proposalLookup.size },
+      'Propdate proposal lookup prepared.',
+    )
+
     const userFid = getUserFid()
     logger.debug({ userFid }, 'User FID retrieved.')
     const followers = await getFollowerFids(userFid)
-    logger.info({ followerCount: followers.length }, 'Follower FIDs retrieved.')
-    const followerDaosMap = await getFollowersDaoMap(followers)
-    for (const follower of followers) {
-      if (!shouldProcessFollower(follower, options)) {
-        continue
-      }
+    const scopedFollowers = followers.filter((follower) =>
+      shouldProcessFollower(follower, options),
+    )
+    logger.info(
+      {
+        followerCount: followers.length,
+        scopedFollowerCount: scopedFollowers.length,
+      },
+      'Follower FIDs retrieved.',
+    )
 
+    if (scopedFollowers.length === 0) {
+      logger.warn(
+        'No followers matched targeting options, terminating execution.',
+      )
+      return
+    }
+
+    const followerDaosMap = await getFollowersDaoMap(scopedFollowers)
+    for (const follower of scopedFollowers) {
       logger.debug({ follower }, 'Processing follower.')
       const daos = followerDaosMap[follower] ?? []
       logger.debug(
@@ -106,10 +176,11 @@ async function handleProposalUpdates(options: TargetingOptions) {
         )
 
         // get proposal data from proposal id
-        const proposal = await getProposalFromId(
-          propdate.chain,
+        const proposalKey = getProposalKey(
+          propdate.chain.id,
           propdate.proposalId,
         )
+        const proposal = proposalLookup.get(proposalKey)
 
         if (!proposal) {
           // skip if proposal doesn't exist or Json parsing error
