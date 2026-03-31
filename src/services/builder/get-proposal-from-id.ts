@@ -1,4 +1,5 @@
 import { chainEndpoints } from '@/services/builder/index'
+import { runBuilderRequestWithRetry } from '@/services/builder/request'
 import { Chain, Proposal } from '@/services/builder/types'
 import { gql, GraphQLClient } from 'graphql-request'
 import { JsonObject } from 'type-fest'
@@ -44,7 +45,10 @@ export const getProposalData = async (
     const variables = {
       id: proposalId.toLowerCase(),
     }
-    const response = await client.request<Data>(query, variables)
+    const response = await runBuilderRequestWithRetry(
+      async () => client.request<Data>(query, variables),
+      `get-proposal-from-id chain=${chain.name} proposalId=${proposalId}`,
+    )
     if (!response.proposal) {
       throw new Error(`Proposal does not exist: ${proposalId}`)
     }

@@ -93,6 +93,88 @@ export async function getFollowerDAOs(follower: number, addresses: string[]) {
 }
 
 /**
+ * Resolves DAO memberships for a list of followers with batched owner lookups.
+ * This reduces subgraph load by querying unique addresses in chunks.
+ * @param followers - Follower FIDs to resolve.
+ * @returns Map of follower FID to DAO IDs.
+ */
+export async function getFollowersDaoMap(
+  followers: number[],
+): Promise<Record<number, string[]>> {
+  const followerDaoMap: Record<number, string[]> = {}
+  const unresolvedFollowers: {
+    addresses: string[]
+    follower: number
+  }[] = []
+  const unresolvedAddressSet = new Set<string>()
+
+  for (const follower of followers) {
+    const cacheKey = `dao_ids_${follower.toString()}`
+    const cachedDaoIds = await getCache<string[] | null>(
+      cacheKey,
+      CACHE_MAX_AGE_MS,
+    )
+
+    if (cachedDaoIds) {
+      followerDaoMap[follower] = cachedDaoIds
+      continue
+    }
+
+    let addresses = await getFollowerAddresses(follower)
+    logger.debug({ follower, addresses }, 'Follower addresses retrieved.')
+
+    addresses = addresses.filter((address) =>
+      /^0x[a-fA-F0-9]{40}$/.test(address),
+    )
+    logger.debug({ follower, addresses }, 'Filtered valid Ethereum addresses.')
+
+    if (addresses.length === 0) {
+      followerDaoMap[follower] = []
+      continue
+    }
+
+    unresolvedFollowers.push({
+      follower,
+      addresses,
+    })
+
+    for (const address of addresses) {
+      unresolvedAddressSet.add(address.toLowerCase())
+    }
+  }
+
+  if (unresolvedFollowers.length === 0) {
+    return followerDaoMap
+  }
+
+  const { ownerDaoIdsMap } = await getDAOsForOwners(env, [
+    ...unresolvedAddressSet,
+  ])
+
+  for (const { follower, addresses } of unresolvedFollowers) {
+    const daoIdsSet = new Set<string>()
+    for (const address of addresses) {
+      const ownerDaoIds = ownerDaoIdsMap[address.toLowerCase()] ?? []
+      for (const daoId of ownerDaoIds) {
+        daoIdsSet.add(daoId.toLowerCase())
+      }
+    }
+
+    const daoIds = [...daoIdsSet]
+    followerDaoMap[follower] = daoIds
+
+    const cacheKey = `dao_ids_${follower.toString()}`
+    await setCache(cacheKey, daoIds)
+    logger.info(
+      { follower, daoIds },
+      'DAO IDs fetched from batch lookup and cached successfully',
+    )
+  }
+
+  return followerDaoMap
+}
+
+/**
  * Retrieves the bot FID from FARCASTER_APP_FID.
  * @returns The configured bot FID.
  */

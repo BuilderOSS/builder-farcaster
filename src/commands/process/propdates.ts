@@ -1,8 +1,7 @@
 import { getCache, setCache } from '@/cache'
 import {
-  getFollowerAddresses,
-  getFollowerDAOs,
   getFollowerFids,
+  getFollowersDaoMap,
   getProposalFromId,
   getUserFid,
 } from '@/commands'
@@ -10,7 +9,7 @@ import { logger } from '@/logger'
 import { addToQueue } from '@/queue'
 import { getPropdateAttestations } from '@/services/eas/get-propdate-attestations'
 import { TargetingOptions } from '@/services/testing/targeting'
-import { filter, pipe } from 'remeda'
+import { filter } from 'remeda'
 import { JsonValue } from 'type-fest'
 
 /**
@@ -57,43 +56,21 @@ async function handleProposalUpdates(options: TargetingOptions) {
     logger.debug({ userFid }, 'User FID retrieved.')
     const followers = await getFollowerFids(userFid)
     logger.info({ followerCount: followers.length }, 'Follower FIDs retrieved.')
+    const followerDaosMap = await getFollowersDaoMap(followers)
     for (const follower of followers) {
       if (!shouldProcessFollower(follower, options)) {
         continue
       }
 
       logger.debug({ follower }, 'Processing follower.')
-      // Retrieve the ethereum addresses associated with the current follower
-      let addresses = await getFollowerAddresses(follower)
-      logger.debug({ follower, addresses }, 'Follower addresses retrieved.')
-
-      addresses = pipe(
-        addresses,
-        filter((address) => /^0x[a-fA-F0-9]{40}$/.test(address)),
-      )
-      logger.debug(
-        { follower, addresses },
-        'Filtered valid Ethereum addresses.',
-      )
-
-      // If no addresses are found, skip to the next follower
-      if (addresses.length === 0) {
-        logger.info(
-          { follower },
-          'No valid addresses found for follower, skipping.',
-        )
-        continue
-      }
-
-      // Retrieve the DAOs associated with the current follower and their addresses
-      const daos = await getFollowerDAOs(follower, addresses)
+      const daos = followerDaosMap[follower] ?? []
       logger.debug(
         { follower, daos },
         'DAOs associated with follower retrieved.',
       )
 
       // If no DAOs are found, skip to the next follower
-      if (!daos || daos.length <= 0) {
+      if (daos.length <= 0) {
         logger.info({ follower }, 'No DAOs found for follower, skipping.')
         continue
       }

@@ -9,7 +9,7 @@
     "predev": "pnpm lint && pnpm build",
     "dev": "pnpm dev:process && pnpm dev:consume",
     "dev:consume": "node dist/index.js queues consume -l 10",
-    "dev:fid": "node scripts/find-fid.mjs",
+    "dev:fid": "node scripts/find-fid.js",
     "dev:invites": "node dist/index.js process invites",
     "dev:process": "node dist/index.js process proposals",
     "dev:propdates": "node dist/index.js process propdates",
