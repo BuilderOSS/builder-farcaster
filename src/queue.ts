@@ -19,6 +19,22 @@ export async function addToQueue(data: JsonValue): Promise<void> {
   const timestamp = new Date()
   const dataString = JSON.stringify(data)
 
+  const existingTask = await prisma.queue.findFirst({
+    where: {
+      data: dataString,
+      status: {
+        in: ['pending', 'processing'],
+      },
+    },
+    select: {
+      taskId: true,
+    },
+  })
+
+  if (existingTask) {
+    return
+  }
+
   await prisma.queue.create({
     data: {
       taskId,

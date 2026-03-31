@@ -172,6 +172,15 @@ Invite processing is intentionally disabled pending app-key auth validation.
 
 - Health endpoint: `GET /api/health`
 - Includes queue depth metrics (`pending`, `processing`, `failed`, `completedLast24h`)
+- Includes warning checks for high backlog and stale processing locks
+
+### Queue Retention
+
+- Daily cleanup removes:
+  - cache rows older than 3 days
+  - completed tasks older than 30 days
+  - failed tasks older than 60 days
+- Cleanup also recovers stale `processing` tasks (older than 15 minutes)
 
 ### Targeted Test Runs
 
