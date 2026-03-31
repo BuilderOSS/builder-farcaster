@@ -119,7 +119,7 @@ async function createSignedKeyRequest(
   for (const path of SIGNED_KEY_REQUEST_CREATE_PATHS) {
     try {
       const response = await fetchRequest<SignedKeyRequestResponse>(
-        env.WARPCAST_BASE_URL,
+        env.FARCASTER_API_BASE_URL,
         undefined,
         HttpRequestMethod.POST,
         path,
@@ -149,7 +149,7 @@ async function waitForSignedKeyCompletion(
 
   for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
     const response = await fetchRequest<SignedKeyRequestResponse>(
-      env.WARPCAST_BASE_URL,
+      env.FARCASTER_API_BASE_URL,
       undefined,
       HttpRequestMethod.GET,
       '/v2/signed-key-request',

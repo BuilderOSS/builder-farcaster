@@ -1,11 +1,4 @@
-import { processInvitesCommand } from '@/commands/process/invites'
-import { isInvitesEnabled } from '@/flags'
 import { isAuthorizedCronRequest } from '@/services/cron/auth'
-import {
-  getTargetingOptionsFromEnv,
-  getTargetingOptionsFromQuery,
-  mergeTargetingOptions,
-} from '@/services/testing/targeting'
 
 export const config = {
   runtime: 'nodejs',
@@ -15,12 +8,6 @@ interface ApiRequest {
   method?: string
   headers: {
     authorization?: string
-  }
-  query: {
-    fid?: string | string[]
-    daoId?: string | string[]
-    chain?: string | string[]
-    dryRun?: string | string[]
   }
 }
 
@@ -33,9 +20,8 @@ interface ApiResponse {
  * Executes the scheduled invitation processing job.
  * @param req - Incoming Vercel request.
  * @param res - Outgoing Vercel response.
- * @returns Promise that resolves when response is sent.
  */
-export default async function handler(req: ApiRequest, res: ApiResponse) {
+export default function handler(req: ApiRequest, res: ApiResponse) {
   if (req.method !== 'GET') {
     res.status(405).json({ error: 'Method not allowed' })
     return
@@ -46,40 +32,17 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
     return
   }
 
-  const startedAt = Date.now()
-  const options = mergeTargetingOptions(
-    getTargetingOptionsFromEnv(),
-    getTargetingOptionsFromQuery(req.query),
-  )
-
-  if (!isInvitesEnabled()) {
-    res.status(200).json({
-      ok: true,
-      job: 'process-invites',
-      skipped: true,
-      reason: 'Invites are disabled by ENABLE_INVITES flag',
-      options,
-      durationMs: Date.now() - startedAt,
-    })
-    return
-  }
-
-  try {
-    await processInvitesCommand(options)
-    res.status(200).json({
-      ok: true,
-      job: 'process-invites',
-      options,
-      durationMs: Date.now() - startedAt,
-    })
-    return
-  } catch (error) {
-    res.status(500).json({
-      ok: false,
-      job: 'process-invites',
-      error: error instanceof Error ? error.message : String(error),
-      durationMs: Date.now() - startedAt,
-    })
-    return
-  }
+  // TODO(invites): Re-enable this cron after app-key auth has been validated
+  // end-to-end for /v2/user-by-verification and invitation queue consumption.
+  // Remaining work before re-enable:
+  // 1) Verify app-key bearer token format against authenticated Farcaster endpoints.
+  // 2) Add integration test coverage for invite owner->fid resolution.
+  // 3) Run dry-run + no-send + real-send invite validation and confirm retries.
+  res.status(200).json({
+    ok: true,
+    job: 'process-invites',
+    skipped: true,
+    reason:
+      'Invites are intentionally disabled pending app-key auth validation.',
+  })
 }

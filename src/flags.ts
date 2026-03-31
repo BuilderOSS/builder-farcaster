@@ -24,12 +24,3 @@ export function parseBooleanEnv(
 
   return defaultValue
 }
-
-/**
- * Returns whether invite processing is enabled.
- * Defaults to false to keep invites disabled unless explicitly enabled.
- * @returns True if invites are enabled.
- */
-export function isInvitesEnabled(): boolean {
-  return parseBooleanEnv(process.env.ENABLE_INVITES, false)
-}

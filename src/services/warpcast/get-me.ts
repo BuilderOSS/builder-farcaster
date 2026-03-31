@@ -11,7 +11,7 @@ interface Response {
 }
 
 export const getMe = async (env: Env): Promise<Result> => {
-  const { WARPCAST_BASE_URL: baseUrl } = env
+  const { FARCASTER_API_BASE_URL: baseUrl } = env
   const authToken = await getWarpcastAuthToken(env)
 
   const { result } = await fetchRequest<Response>(

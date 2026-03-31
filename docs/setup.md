@@ -18,7 +18,7 @@ Fill in at least:
 
 - `NODE_ENV=development`
 - `DATABASE_URL` and `DIRECT_URL` (Postgres)
-- `WARPCAST_BASE_URL`, `WARPCAST_API_KEY`
+- `FARCASTER_API_BASE_URL`, `FARCASTER_API_KEY`
 - `FARCASTER_APP_FID`, `FARCASTER_APP_KEY`, `FARCASTER_APP_KEY_PUBLIC`
 - `NEXT_PUBLIC_GOLDSKY_PROJECT_ID` (optional)
 - `NEXT_PUBLIC_NETWORK_TYPE` (optional)
@@ -49,4 +49,4 @@ Use env vars to scope processing during testing:
 - `TEST_TARGET_CHAINS=base,optimism`
 - `TEST_DRY_RUN=true`
 - `ENABLE_TESTNET_CHAINS=true` (includes testnet chains in runtime queries)
-- `NO_SEND_NOTIFICATIONS=true` (consumer logs payloads instead of sending Warpcast DMs)
+- `NO_SEND_NOTIFICATIONS=true` (consumer logs payloads instead of sending Farcaster DMs)

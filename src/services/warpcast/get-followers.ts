@@ -21,7 +21,7 @@ interface Response {
  * @returns - A promise that resolves to an object containing all retrieved users.
  */
 export const getFollowers = async (env: Env, fid: number): Promise<Result> => {
-  const { WARPCAST_BASE_URL: baseUrl } = env
+  const { FARCASTER_API_BASE_URL: baseUrl } = env
   let newCursor = ''
   let users: User[] = []
   let response: Response
@@ -30,7 +30,7 @@ export const getFollowers = async (env: Env, fid: number): Promise<Result> => {
     const params = {
       fid: fid.toString(),
       cursor: newCursor,
-      limit: '100',
+      limit: '50',
     }
     response = await fetchRequest<Response>(
       baseUrl,

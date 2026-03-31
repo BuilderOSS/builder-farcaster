@@ -22,6 +22,14 @@ import {
 import { JsonValue } from 'type-fest'
 
 /**
+ * Returns whether invite processing is enabled.
+ * @returns False until app-key auth for invite lookups is validated.
+ */
+function isInvitesFlowEnabled(): boolean {
+  return false
+}
+
+/**
  * Returns whether a target FID should receive invite processing.
  * @param fid - Candidate Farcaster ID.
  * @param options - Optional targeting configuration.
@@ -68,6 +76,16 @@ function filterTargetDaos(daos: Dao[], options: TargetingOptions): Dao[] {
  * @param options - Optional targeting configuration.
  */
 export async function processInvitesCommand(options: TargetingOptions = {}) {
+  if (!isInvitesFlowEnabled()) {
+    // TODO(invites): Re-enable when app-key authenticated owner->fid lookup is
+    // validated end-to-end. Keep this disabled to avoid partial invite execution.
+    logger.warn(
+      { options },
+      'Invites flow is intentionally disabled pending app-key auth validation.',
+    )
+    return
+  }
+
   try {
     const sortedFidToDaoMap = await getSortedFidToDaoMap(options)
     logger.debug(

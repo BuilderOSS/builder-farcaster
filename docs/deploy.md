@@ -21,14 +21,13 @@ DIRECT_URL=<direct_neon_connection_string>
 NEXT_PUBLIC_GOLDSKY_PROJECT_ID=<optional_goldsky_project_id>
 NEXT_PUBLIC_NETWORK_TYPE=<optional_mainnet_or_testnet>
 
-WARPCAST_BASE_URL=https://api.farcaster.xyz
-WARPCAST_API_KEY=<your_api_key>
+FARCASTER_API_BASE_URL=https://api.farcaster.xyz
+FARCASTER_API_KEY=<your_api_key>
 FARCASTER_APP_FID=<app_fid>
 FARCASTER_APP_KEY=<ed25519_private_key_hex>
 FARCASTER_APP_KEY_PUBLIC=<ed25519_public_key_hex>
 
 CRON_SECRET=<shared_secret>
-ENABLE_INVITES=false
 ENABLE_TESTNET_CHAINS=false
 ```
 
@@ -67,7 +66,6 @@ Cron jobs are defined in `vercel.json`:
 
 - proposals hourly
 - propdates hourly
-- invites monthly (gated by `ENABLE_INVITES`)
 - consume queue every minute
 - cleanup daily
 

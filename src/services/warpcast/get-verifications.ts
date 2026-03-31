@@ -16,7 +16,7 @@ export const getVerifications = async (
   cursor?: string,
   limit: NonNegative<number> = 25,
 ): Promise<Result> => {
-  const { WARPCAST_BASE_URL: baseUrl } = env
+  const { FARCASTER_API_BASE_URL: baseUrl } = env
 
   const { result } = await fetchRequest<Response>(
     baseUrl,

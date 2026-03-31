@@ -14,7 +14,7 @@ export const getUserByVerification = async (
   env: Env,
   address: string,
 ): Promise<Result> => {
-  const { WARPCAST_BASE_URL: baseUrl } = env
+  const { FARCASTER_API_BASE_URL: baseUrl } = env
   const authToken = await getWarpcastAuthToken(env)
 
   const { result } = await fetchRequest<Response>(

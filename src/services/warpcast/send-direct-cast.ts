@@ -10,7 +10,7 @@ interface Response {
 }
 
 /**
- * Sends a direct cast request to the warpcast server.
+ * Sends a direct cast request to the Farcaster client API.
  * @param env - The environment configuration.
  * @param recipientFid - The FID of the recipient.
  * @param message - The message to be sent.
@@ -23,7 +23,7 @@ export const sendDirectCast = async (
   message: string,
   idempotencyKey: string,
 ): Promise<Result> => {
-  const { WARPCAST_API_KEY: apiKey, WARPCAST_BASE_URL: baseUrl } = env
+  const { FARCASTER_API_KEY: apiKey, FARCASTER_API_BASE_URL: baseUrl } = env
 
   const body = {
     recipientFid,

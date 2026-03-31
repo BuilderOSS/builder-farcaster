@@ -60,7 +60,7 @@ This repository contains the source code for the @builderbot Farcaster bot.
 
 - Node.js 18+
 - pnpm
-- Warpcast API credentials
+- Farcaster API credentials
 - Postgres database (Neon recommended)
 
 ### Installation
@@ -87,7 +87,7 @@ This repository contains the source code for the @builderbot Farcaster bot.
    Then configure the following variables:
 
    - `FARCASTER_APP_FID`, `FARCASTER_APP_KEY`, `FARCASTER_APP_KEY_PUBLIC` - App-key auth and bot identity
-   - `WARPCAST_API_KEY` - Your Warpcast API key
+   - `FARCASTER_API_KEY` - Your Farcaster Direct Cast API key
    - `NEXT_PUBLIC_GOLDSKY_PROJECT_ID` (optional) - Goldsky project id override
    - `NEXT_PUBLIC_NETWORK_TYPE` (optional) - set `testnet` to use `dev` subgraph version
    - `DATABASE_URL` - Postgres pooled connection string
@@ -127,7 +127,7 @@ The bot is built with:
 - **CLI Interface**: Commander.js for command-line operations
 - **Queue System**: Postgres-backed task queue with retry/backoff logic
 - **Multi-chain Integration**: GraphQL queries to Builder subgraphs
-- **Farcaster Integration**: Warpcast API for sending direct casts
+- **Farcaster Integration**: Farcaster client API for sending direct casts
 - **Database**: Prisma ORM with Postgres (Neon)
 
 ## 🚀 Deployment
@@ -162,12 +162,11 @@ Configured via `vercel.json`:
 
 - Process proposals: every hour
 - Process propdates: every hour
-- Process invites: monthly
 - Consume queue: every minute
 - Cleanup cache and old queue rows: daily
 
 Each cron endpoint validates `Authorization: Bearer <CRON_SECRET>`.
-Invite processing is controlled by `ENABLE_INVITES` and is disabled by default.
+Invite processing is intentionally disabled pending app-key auth validation.
 
 ### Runtime Health
 
@@ -211,16 +210,15 @@ DIRECT_URL=<direct_neon_connection_string>
 NEXT_PUBLIC_GOLDSKY_PROJECT_ID=<goldsky_project_id>
 NEXT_PUBLIC_NETWORK_TYPE=<mainnet_or_testnet>
 
-# Warpcast API
-WARPCAST_BASE_URL=https://api.farcaster.xyz
-WARPCAST_API_KEY=<your_api_key>
+# Farcaster API
+FARCASTER_API_BASE_URL=https://api.farcaster.xyz
+FARCASTER_API_KEY=<your_api_key>
 FARCASTER_APP_FID=<app_fid>
 FARCASTER_APP_KEY=<ed25519_private_key_hex>
 FARCASTER_APP_KEY_PUBLIC=<ed25519_public_key_hex>
 CRON_SECRET=<shared_cron_secret>
 
 # Feature flags / test targeting
-ENABLE_INVITES=false
 ENABLE_TESTNET_CHAINS=false
 NO_SEND_NOTIFICATIONS=false
 TEST_TARGET_FIDS=
