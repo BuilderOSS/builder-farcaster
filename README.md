@@ -239,10 +239,15 @@ TEST_TARGET_CHAINS=
 TEST_DRY_RUN=false
 ```
 
-### Future Improvement
+### Future Improvements
 
-Current runtime uses `@buildeross/constants` for subgraph URLs and keeps request code local in this bot.
-For future simplification, we can migrate to `@buildeross/sdk/subgraph` request helpers directly once the SDK exposes all query helpers we need for notification ingestion.
+- Current runtime uses `@buildeross/constants` for subgraph URLs and keeps request code local in this bot.
+- For future simplification, we can migrate to `@buildeross/sdk/subgraph` request helpers directly once the SDK exposes all query helpers we need for notification ingestion.
+- Add alerting for health warnings (`pending` depth, stale processing age, repeated failures) via Slack/email/Sentry.
+- Track producer lock skips (`skipped_due_to_lock`) and expose trend metrics for overlap visibility.
+- Add an incident throttle env (follower cap per run) to reduce load during rate-limit events.
+- Add lightweight dashboard/runbook checks for queue backlog growth, stale processing recovery frequency, and cleanup execution success/failure.
+- Re-enable invites only after app-key auth is fully validated for `/v2/user-by-verification` and invite end-to-end tests pass.
 
 ## 📄 License
 
