@@ -69,6 +69,8 @@ Cron jobs are defined in `vercel.json`:
 - consume queue every minute
 - cleanup daily
 
+Producer schedules are staggered to reduce overlapping load (`:05` proposals, `:20` propdates).
+
 Testnet chains are excluded in production by default. Set `ENABLE_TESTNET_CHAINS=true` to include them for targeted testing.
 
 ## Future Option

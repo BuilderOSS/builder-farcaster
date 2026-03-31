@@ -165,6 +165,8 @@ Configured via `vercel.json`:
 - Consume queue: every minute
 - Cleanup cache and old queue rows: daily
 
+Producer jobs are staggered to reduce load spikes (`:05` proposals, `:20` propdates).
+
 Each cron endpoint validates `Authorization: Bearer <CRON_SECRET>`.
 Invite processing is intentionally disabled pending app-key auth validation.
 
