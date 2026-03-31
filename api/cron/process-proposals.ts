@@ -1,10 +1,15 @@
 import { processProposalsCommand } from '@/commands/process/proposals'
 import { isAuthorizedCronRequest } from '@/services/cron/auth'
+import { acquireJobLock, releaseJobLock } from '@/services/locks/job-lock'
 import {
   getTargetingOptionsFromEnv,
   getTargetingOptionsFromQuery,
   mergeTargetingOptions,
 } from '@/services/testing/targeting'
+import { randomUUID } from 'node:crypto'
+
+const LOCK_NAME = 'process-proposals'
+const LOCK_TTL_MS = 50 * 60 * 1000
 
 export const config = {
   runtime: 'nodejs',
@@ -50,6 +55,19 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
     getTargetingOptionsFromEnv(),
     getTargetingOptionsFromQuery(req.query),
   )
+  const owner = `cron-${LOCK_NAME}-${randomUUID()}`
+
+  const lockAcquired = await acquireJobLock(LOCK_NAME, owner, LOCK_TTL_MS)
+  if (!lockAcquired) {
+    res.status(200).json({
+      ok: true,
+      job: 'process-proposals',
+      skipped: true,
+      reason: 'Job lock is already held by another run',
+      durationMs: Date.now() - startedAt,
+    })
+    return
+  }
 
   try {
     await processProposalsCommand(options)
@@ -68,5 +86,7 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
       durationMs: Date.now() - startedAt,
     })
     return
+  } finally {
+    await releaseJobLock(LOCK_NAME, owner)
   }
 }

@@ -30,3 +30,13 @@ model Queue {
 
   @@index([status, availableAt, timestamp])
 }
+
+model JobLock {
+  name        String   @id
+  lockedUntil DateTime
+  owner       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([lockedUntil])
+}
