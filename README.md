@@ -180,6 +180,7 @@ Invite processing is intentionally disabled pending app-key auth validation.
 
 - Daily cleanup removes:
   - cache rows older than 3 days
+  - job lock rows older than 7 days
   - completed tasks older than 30 days
   - failed tasks older than 60 days
 - Cleanup also recovers stale `processing` tasks (older than 15 minutes)

@@ -3,10 +3,12 @@ import { prisma } from '@/db'
 const CACHE_RETENTION_DAYS = 3
 const COMPLETED_QUEUE_RETENTION_DAYS = 30
 const FAILED_QUEUE_RETENTION_DAYS = 60
+const JOB_LOCK_RETENTION_DAYS = 7
 const STALE_PROCESSING_MINUTES = 15
 
 export interface CleanupResult {
   deletedExpiredCache: number
+  deletedExpiredJobLocks: number
   deletedCompletedTasks: number
   deletedFailedTasks: number
   recoveredStaleProcessingTasks: number
@@ -22,6 +24,9 @@ export async function cleanupDatabase(): Promise<CleanupResult> {
   const processingCutoff = new Date(now - STALE_PROCESSING_MINUTES * 60 * 1000)
 
   const cacheCutoff = new Date(now - CACHE_RETENTION_DAYS * 24 * 60 * 60 * 1000)
+  const jobLockCutoff = new Date(
+    now - JOB_LOCK_RETENTION_DAYS * 24 * 60 * 60 * 1000,
+  )
   const completedQueueCutoff = new Date(
     now - COMPLETED_QUEUE_RETENTION_DAYS * 24 * 60 * 60 * 1000,
   )
@@ -84,36 +89,48 @@ export async function cleanupDatabase(): Promise<CleanupResult> {
     recoveredStaleProcessingTasks += 1
   }
 
-  const [expiredCacheResult, completedQueueResult, failedQueueResult] =
-    await prisma.$transaction([
-      prisma.cache.deleteMany({
-        where: {
-          timestamp: {
-            lt: cacheCutoff,
-          },
+  const [
+    expiredCacheResult,
+    expiredJobLockResult,
+    completedQueueResult,
+    failedQueueResult,
+  ] = await prisma.$transaction([
+    prisma.cache.deleteMany({
+      where: {
+        timestamp: {
+          lt: cacheCutoff,
         },
-      }),
-      prisma.queue.deleteMany({
-        where: {
-          status: 'completed',
-          completedAt: {
-            not: null,
-            lt: completedQueueCutoff,
-          },
+      },
+    }),
+    prisma.jobLock.deleteMany({
+      where: {
+        lockedUntil: {
+          lt: jobLockCutoff,
         },
-      }),
-      prisma.queue.deleteMany({
-        where: {
-          status: 'failed',
-          updatedAt: {
-            lt: failedQueueCutoff,
-          },
+      },
+    }),
+    prisma.queue.deleteMany({
+      where: {
+        status: 'completed',
+        completedAt: {
+          not: null,
+          lt: completedQueueCutoff,
         },
-      }),
-    ])
+      },
+    }),
+    prisma.queue.deleteMany({
+      where: {
+        status: 'failed',
+        updatedAt: {
+          lt: failedQueueCutoff,
+        },
+      },
+    }),
+  ])
 
   return {
     deletedExpiredCache: expiredCacheResult.count,
+    deletedExpiredJobLocks: expiredJobLockResult.count,
     deletedCompletedTasks: completedQueueResult.count,
     deletedFailedTasks: failedQueueResult.count,
     recoveredStaleProcessingTasks,
