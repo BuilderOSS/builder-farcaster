@@ -46,14 +46,15 @@ function formatProposalMessage(proposal: Proposal): string {
     voteEnd: votingEndsAt,
   } = proposal
 
-  return (
-    `📢 A new proposal (#${proposalNumber.toString()}: "${proposalTitle}") has been created on ${daoName} ` +
-    `around ${toRelativeTime(Number(createdAt))}. ` +
-    `🗳️ Voting ${isPast(Number(votingStartsAt)) ? 'started' : 'starts'} ${toRelativeTime(Number(votingStartsAt))} and ` +
-    `${isPast(Number(votingEndsAt)) ? 'ended' : 'ends'} ${toRelativeTime(Number(votingEndsAt))}. ` +
-    `🚀🚀 Check it out for more details and participate in the voting process!` +
-    `\n\nhttps://nouns.build/dao/${chainName.toLowerCase()}/${daoId}/vote/${proposalNumber.toString()}`
-  )
+  return [
+    `🗳️ New proposal in ${daoName}`,
+    `#${proposalNumber.toString()} - ${proposalTitle}`,
+    '',
+    `Created: ${toRelativeTime(Number(createdAt))}`,
+    `Voting: ${isPast(Number(votingStartsAt)) ? 'started' : 'starts'} ${toRelativeTime(Number(votingStartsAt))} · ${isPast(Number(votingEndsAt)) ? 'ended' : 'ends'} ${toRelativeTime(Number(votingEndsAt))}`,
+    '',
+    `Vote now: https://nouns.build/dao/${chainName.toLowerCase()}/${daoId}/vote/${proposalNumber.toString()}`,
+  ].join('\n')
 }
 
 /**
@@ -86,13 +87,16 @@ function formatPropdateMessage(propdate: Propdate, proposal: Proposal): string {
         ` for milestone ${(parsedMessage.milestoneId + 1).toString()}`
       : ''
 
-  return (
-    `📢 A new update to proposal (#${proposalNumber.toString()}: "${proposalTitle}")${milestoneText} has been created on ${daoName} ` +
-    `around ${toRelativeTime(Number(createdAt))}. ` +
-    `\n\n${truncatedUpdate} ` +
-    `\n\n🚀 Check it out for more details and participate in the voting process!` +
-    `\n\nhttps://nouns.build/dao/${chainName.toLowerCase()}/${daoId}/vote/${proposalNumber.toString()}`
-  )
+  return [
+    `📝 Proposal update in ${daoName}`,
+    `#${proposalNumber.toString()} - ${proposalTitle}${milestoneText}`,
+    '',
+    `Posted: ${toRelativeTime(Number(createdAt))}`,
+    '',
+    truncatedUpdate,
+    '',
+    `View proposal: https://nouns.build/dao/${chainName.toLowerCase()}/${daoId}/vote/${proposalNumber.toString()}`,
+  ].join('\n')
 }
 
 /**
