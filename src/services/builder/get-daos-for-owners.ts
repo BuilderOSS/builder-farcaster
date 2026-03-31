@@ -15,6 +15,7 @@ interface Result {
 }
 
 const OWNER_CHUNK_SIZE = 75
+const SUBGRAPH_PAGE_SIZE = 1000
 
 /**
  * Splits addresses into fixed-size chunks.
@@ -54,10 +55,14 @@ export const getDAOsForOwners = async (
   }
 
   const query = gql`
-    query GetDaosForOwners($ownerAddresses: [String!]) {
+    query GetDaosForOwners(
+      $ownerAddresses: [String!]
+      $first: Int!
+      $skip: Int!
+    ) {
       owners: daotokenOwners(
-        skip: 0
-        first: 1000
+        skip: $skip
+        first: $first
         where: { owner_in: $ownerAddresses }
       ) {
         id
@@ -80,24 +85,34 @@ export const getDAOsForOwners = async (
       const ownerChunks = chunkAddresses(normalizedAddresses, OWNER_CHUNK_SIZE)
 
       for (const ownerChunk of ownerChunks) {
-        const response = await runBuilderRequestWithRetry(
-          async () =>
-            client.request<Data>(query, {
-              ownerAddresses: ownerChunk,
-            }),
-          `get-daos-for-owners chain=${chain.name} chunkSize=${String(ownerChunk.length)}`,
-        )
+        let hasMore = true
+        let skip = 0
 
-        allOwners.push(
-          ...response.owners.map((owner) => ({
-            ...owner,
-            owner: owner.owner.toLowerCase(),
-            dao: {
-              ...owner.dao,
-              chain,
-            },
-          })),
-        )
+        while (hasMore) {
+          const response = await runBuilderRequestWithRetry(
+            async () =>
+              client.request<Data>(query, {
+                first: SUBGRAPH_PAGE_SIZE,
+                ownerAddresses: ownerChunk,
+                skip,
+              }),
+            `get-daos-for-owners chain=${chain.name} chunkSize=${String(ownerChunk.length)} skip=${String(skip)}`,
+          )
+
+          allOwners.push(
+            ...response.owners.map((owner) => ({
+              ...owner,
+              owner: owner.owner.toLowerCase(),
+              dao: {
+                ...owner.dao,
+                chain,
+              },
+            })),
+          )
+
+          hasMore = response.owners.length === SUBGRAPH_PAGE_SIZE
+          skip += response.owners.length
+        }
       }
     }
 

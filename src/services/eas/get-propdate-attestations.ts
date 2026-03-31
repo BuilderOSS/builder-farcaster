@@ -1,3 +1,4 @@
+import { runBuilderRequestWithRetry } from '@/services/builder/request'
 import {
   MessageType,
   Propdate,
@@ -39,75 +40,79 @@ export const getPropdateAttestations = async (): Promise<Result> => {
       DateTime.now().minus({ hours: 24 }).toSeconds(),
     )
 
-    const propdatesPromises = propdateChainEndpoints.map(
-      async ({ chain, endpoint }) => {
-        const query = gql`
-          query recentPropdates($fromTimestamp: BigInt!, $zeroHash: Bytes!) {
-            proposalUpdates(
-              where: {
-                timestamp_gte: $fromTimestamp
-                deleted: false
-                originalMessageId: $zeroHash
-              }
-              orderBy: timestamp
-              orderDirection: desc
-              first: 1000
-            ) {
-              id
-              creator
-              messageType
-              message
-              originalMessageId
-              timestamp
-              transactionHash
-              proposal {
-                proposalId
-                dao {
-                  tokenAddress
-                }
-              }
+    const query = gql`
+      query recentPropdates($fromTimestamp: BigInt!, $zeroHash: Bytes!) {
+        proposalUpdates(
+          where: {
+            timestamp_gte: $fromTimestamp
+            deleted: false
+            originalMessageId: $zeroHash
+          }
+          orderBy: timestamp
+          orderDirection: desc
+          first: 1000
+        ) {
+          id
+          creator
+          messageType
+          message
+          originalMessageId
+          timestamp
+          transactionHash
+          proposal {
+            proposalId
+            dao {
+              tokenAddress
             }
           }
-        `
-
-        const variables = {
-          fromTimestamp: oneDayAgoInSeconds.toString(),
-          zeroHash,
         }
+      }
+    `
 
-        const client = new GraphQLClient(endpoint)
-        const response = await client.request<Data>(query, variables)
-        const propdates = await Promise.all(
-          response.proposalUpdates.map(async (update) => {
-            const propdateObject = await convertPropdateToObject(
-              update.messageType,
-              update.message,
-              update.proposal.proposalId,
-              update.originalMessageId,
-            )
+    const variables = {
+      fromTimestamp: oneDayAgoInSeconds.toString(),
+      zeroHash,
+    }
 
-            return {
-              ...propdateObject,
-              chain,
-              id: update.id,
-              recipient: update.proposal.dao.tokenAddress,
-              timeCreated: Number(update.timestamp),
-            }
-          }),
-        )
+    const perChainPropdates: Propdate[][] = []
 
-        return propdates.filter(
+    for (const { chain, endpoint } of propdateChainEndpoints) {
+      const client = new GraphQLClient(endpoint)
+      const response = await runBuilderRequestWithRetry(
+        async () => client.request<Data>(query, variables),
+        `get-propdates chain=${chain.name}`,
+      )
+
+      const propdates = await Promise.all(
+        response.proposalUpdates.map(async (update) => {
+          const propdateObject = await convertPropdateToObject(
+            update.messageType,
+            update.message,
+            update.proposal.proposalId,
+            update.originalMessageId,
+          )
+
+          return {
+            ...propdateObject,
+            chain,
+            id: update.id,
+            recipient: update.proposal.dao.tokenAddress,
+            timeCreated: Number(update.timestamp),
+          }
+        }),
+      )
+
+      perChainPropdates.push(
+        propdates.filter(
           (propdate) =>
             propdate.proposalId !== zeroHash &&
             propdate.originalMessageId === zeroHash,
-        )
-      },
-    )
-
-    const results = await Promise.all(propdatesPromises)
+        ),
+      )
+    }
 
     const propdates = pipe(
-      results,
+      perChainPropdates,
       flatMap((chainPropdates) => chainPropdates),
     )
 
