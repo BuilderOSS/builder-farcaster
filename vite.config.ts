@@ -2,11 +2,7 @@ import { defineConfig } from 'vite'
 import tsconfigPaths from 'vite-tsconfig-paths'
 import packageJson from './package.json' // Import the package.json file
 
-// Combine dependencies and devDependencies if needed
-const externalDeps = [
-  ...Object.keys(packageJson.dependencies || {}),
-  ...Object.keys(packageJson.devDependencies || {}),
-]
+const externalDeps = Object.keys(packageJson.dependencies || {})
 
 export default defineConfig({
   plugins: [
@@ -22,7 +18,7 @@ export default defineConfig({
     },
     rollupOptions: {
       treeshake: true, // Ensure tree-shaking is on
-      external: externalDeps, // Use dynamically imported dependencies
+      external: externalDeps,
     },
     outDir: 'dist', // Output directory
     emptyOutDir: true, // Clean output directory before builds

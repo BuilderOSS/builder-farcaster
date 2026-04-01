@@ -1,2 +1,2 @@
-bun lint-staged
-bun test
+pnpm lint-staged
+pnpm exec vitest run --passWithNoTests
