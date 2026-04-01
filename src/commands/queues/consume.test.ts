@@ -1,16 +1,28 @@
-import { queueConsumeCommand } from '@/commands/queues/consume'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const {
   claimPendingTasksMock,
   completeTaskMock,
+  envMock,
   retryTaskMock,
   sendDirectCastMock,
 } = vi.hoisted(() => ({
   claimPendingTasksMock: vi.fn(),
   completeTaskMock: vi.fn(),
+  envMock: {
+    DATABASE_URL: 'postgres://localhost:5432/test',
+    FARCASTER_API_BASE_URL: 'https://api.farcaster.xyz',
+    FARCASTER_API_KEY: 'test-key',
+    FARCASTER_APP_FID: '123',
+    NO_SEND_NOTIFICATIONS: 'false',
+    NODE_ENV: 'test' as const,
+  },
   retryTaskMock: vi.fn(),
   sendDirectCastMock: vi.fn(),
+}))
+
+vi.mock('@/config', () => ({
+  env: envMock,
 }))
 
 vi.mock('@/flags', () => ({
@@ -26,6 +38,13 @@ vi.mock('@/queue', () => ({
 vi.mock('@/services/farcaster/send-direct-cast', () => ({
   sendDirectCast: sendDirectCastMock,
 }))
+
+let queueConsumeCommand: typeof import('@/commands/queues/consume').queueConsumeCommand
+
+beforeAll(async () => {
+  const consumeModule = await import('@/commands/queues/consume')
+  queueConsumeCommand = consumeModule.queueConsumeCommand
+})
 
 /**
  * Creates a valid notification queue task fixture.

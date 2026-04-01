@@ -1,8 +1,27 @@
-import {
-  getTargetingOptionsFromQuery,
-  mergeTargetingOptions,
-} from '@/services/testing/targeting'
-import { describe, expect, it } from 'vitest'
+import { beforeAll, describe, expect, it, vi } from 'vitest'
+
+const { envMock } = vi.hoisted(() => ({
+  envMock: {
+    DATABASE_URL: 'postgres://localhost:5432/test',
+    FARCASTER_API_BASE_URL: 'https://api.farcaster.xyz',
+    FARCASTER_API_KEY: 'test-key',
+    FARCASTER_APP_FID: '123',
+    NODE_ENV: 'test' as const,
+  },
+}))
+
+vi.mock('@/config', () => ({
+  env: envMock,
+}))
+
+let getTargetingOptionsFromQuery: typeof import('@/services/testing/targeting').getTargetingOptionsFromQuery
+let mergeTargetingOptions: typeof import('@/services/testing/targeting').mergeTargetingOptions
+
+beforeAll(async () => {
+  const targetingModule = await import('@/services/testing/targeting')
+  getTargetingOptionsFromQuery = targetingModule.getTargetingOptionsFromQuery
+  mergeTargetingOptions = targetingModule.mergeTargetingOptions
+})
 
 describe('targeting', () => {
   it('parses repeated and csv fid values with strict numeric validation', () => {
