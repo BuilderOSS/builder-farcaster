@@ -18,14 +18,15 @@ Fill in at least:
 
 - `NODE_ENV=development`
 - `DATABASE_URL` and `DIRECT_URL` (Postgres)
-- `FARCASTER_API_BASE_URL`, `FARCASTER_API_KEY`
+- `FARCASTER_API_KEY`
 - `FARCASTER_APP_FID`
 - `NEXT_PUBLIC_GOLDSKY_PROJECT_ID` (optional)
-- `NEXT_PUBLIC_NETWORK_TYPE` (optional)
+- `NEXT_PUBLIC_NETWORK_TYPE` (optional: `mainnet` or `testnet`; if unset, @buildeross packages default to mainnet)
 - `CRON_SECRET`
 
 Optional for app-key authenticated Farcaster routes:
 
+- `FARCASTER_API_BASE_URL` (defaults to `https://api.farcaster.xyz`)
 - `FARCASTER_APP_KEY`, `FARCASTER_APP_KEY_PUBLIC`
 
 ### 3) Initialize Prisma

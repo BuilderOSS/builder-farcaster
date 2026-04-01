@@ -19,7 +19,7 @@ DATABASE_URL=<pooled_neon_connection_string>
 DIRECT_URL=<direct_neon_connection_string>
 
 NEXT_PUBLIC_GOLDSKY_PROJECT_ID=<optional_goldsky_project_id>
-NEXT_PUBLIC_NETWORK_TYPE=<optional_mainnet_or_testnet>
+NEXT_PUBLIC_NETWORK_TYPE=<optional_mainnet_or_testnet> # allowed: mainnet|testnet; unset defaults to mainnet
 
 FARCASTER_API_BASE_URL=https://api.farcaster.xyz
 FARCASTER_API_KEY=<your_api_key>
@@ -30,6 +30,11 @@ FARCASTER_APP_KEY_PUBLIC=<ed25519_public_key_hex>
 
 CRON_SECRET=<shared_secret>
 ENABLE_TESTNET_CHAINS=false
+
+# Optional health warning thresholds
+PENDING_WARNING_THRESHOLD=500
+PENDING_AGE_WARNING_MINUTES=30
+PROCESSING_STALE_WARNING_MINUTES=20
 ```
 
 Optional targeted-test env vars:

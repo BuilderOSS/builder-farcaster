@@ -1,5 +1,3 @@
-import { first } from 'remeda'
-
 export enum HttpRequestMethod {
   GET = 'GET',
   POST = 'POST',
@@ -17,6 +15,16 @@ export interface FetchResponse {
   errors?: { message: string }[]
 
   [key: string]: unknown
+}
+
+/**
+ * Returns the first API error message when available.
+ * @param data - Parsed API response payload.
+ * @returns First error message or undefined.
+ */
+function getFirstApiErrorMessage(data: FetchResponse): string | undefined {
+  const firstError = data.errors?.[0]
+  return firstError?.message
 }
 
 /**
@@ -51,9 +59,37 @@ export async function fetchRequest<T>(
         : undefined,
   })
 
-  const data: FetchResponse = (await response.json()) as FetchResponse
+  const rawBody = await response.text()
+  let data: FetchResponse = {}
+
+  if (rawBody) {
+    try {
+      data = JSON.parse(rawBody) as FetchResponse
+    } catch {
+      if (!response.ok) {
+        throw new Error(
+          `Farcaster API request failed (${response.status.toString()} ${response.statusText}) for ${method} ${url.pathname}: ${rawBody.slice(0, 500)}`,
+        )
+      }
+
+      throw new Error(
+        `Farcaster API returned non-JSON response for ${method} ${url.pathname}`,
+      )
+    }
+  }
+
+  if (!response.ok) {
+    const apiErrorMessage = getFirstApiErrorMessage(data)
+    const fallbackBody = rawBody ? rawBody.slice(0, 500) : 'empty response body'
+    throw new Error(
+      `Farcaster API request failed (${response.status.toString()} ${response.statusText}) for ${method} ${url.pathname}: ${apiErrorMessage ?? fallbackBody}`,
+    )
+  }
+
   if (data.errors && data.errors.length > 0) {
-    throw new Error(first(data.errors)?.message)
+    throw new Error(
+      getFirstApiErrorMessage(data) ?? 'Unknown Farcaster API error',
+    )
   }
 
   return data as T

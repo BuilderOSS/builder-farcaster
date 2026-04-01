@@ -91,7 +91,7 @@ This repository contains the source code for the @builderbot Farcaster bot.
    - `FARCASTER_API_BASE_URL` (optional - defaults to `https://api.farcaster.xyz`)
    - `FARCASTER_API_KEY` (required) - Your Farcaster Direct Cast API key
    - `NEXT_PUBLIC_GOLDSKY_PROJECT_ID` (optional) - Goldsky project id override
-   - `NEXT_PUBLIC_NETWORK_TYPE` (optional) - set `testnet` to use `dev` subgraph version
+   - `NEXT_PUBLIC_NETWORK_TYPE` (optional) - allowed values: `mainnet` or `testnet`; if unset, @buildeross packages default to mainnet
    - `DATABASE_URL` - Postgres pooled connection string
    - `DIRECT_URL` - Postgres direct connection string for Prisma migrations
    - `CRON_SECRET` - Shared secret for cron endpoint auth
@@ -226,7 +226,7 @@ DIRECT_URL=<direct_neon_connection_string>
 
 # Optional Builder subgraph overrides
 NEXT_PUBLIC_GOLDSKY_PROJECT_ID=<goldsky_project_id>
-NEXT_PUBLIC_NETWORK_TYPE=<mainnet_or_testnet>
+NEXT_PUBLIC_NETWORK_TYPE=<mainnet_or_testnet> # allowed: mainnet|testnet; unset defaults to mainnet
 
 # Farcaster API
 FARCASTER_API_BASE_URL=https://api.farcaster.xyz
@@ -245,6 +245,11 @@ TEST_TARGET_FIDS=
 TEST_TARGET_DAO_IDS=
 TEST_TARGET_CHAINS=
 TEST_DRY_RUN=false
+
+# Optional health warning thresholds
+PENDING_WARNING_THRESHOLD=500
+PENDING_AGE_WARNING_MINUTES=30
+PROCESSING_STALE_WARNING_MINUTES=20
 ```
 
 ### Future Improvements
