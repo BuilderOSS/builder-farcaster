@@ -1,332 +1,180 @@
 import { getCache, setCache } from '@/cache'
-import {
-  getFollowerAddresses,
-  getFollowerDAOs,
-  getFollowerFids,
-  getUserFid,
-} from '@/commands'
+import { getFollowerFids, getFollowersDaoMap, getUserFid } from '@/commands'
 import { logger } from '@/logger'
 import { addToQueue } from '@/queue'
 import { getActiveProposals } from '@/services/builder/get-active-proposals'
+import { Proposal } from '@/services/builder/types'
+import { TargetingOptions } from '@/services/testing/targeting'
 import { DateTime } from 'luxon'
-import { filter, pipe } from 'remeda'
 import { JsonValue } from 'type-fest'
 
-/**
- * Handles proposals that are pending for voting and sends notifications.
- */
-async function handleVotingProposals() {
-  try {
-    logger.info('Fetching active proposals...')
-    const { proposals } = await getActiveProposals()
-    logger.info({ proposals }, 'Active proposals retrieved.')
-
-    const currentUnixTimestamp = DateTime.now().toSeconds() // Current Unix timestamp in seconds
-    logger.debug({ currentUnixTimestamp }, 'Current Unix timestamp calculated.')
-
-    // Filter proposals where voting has not started yet
-    const votingProposals = filter(proposals, (proposal) => {
-      const voteStartTimestamp = Number(proposal.voteStart)
-      const voteEndTimestamp = Number(proposal.voteEnd)
-      logger.debug(
-        { proposalId: proposal.id, voteStartTimestamp, voteEndTimestamp },
-        'Evaluating proposal voting time.',
-      )
-      return (
-        voteStartTimestamp < currentUnixTimestamp &&
-        voteEndTimestamp > currentUnixTimestamp
-      )
-    })
-
-    const proposalCount = votingProposals.length
-    if (proposalCount === 0) {
-      logger.warn('No active proposals found, terminating execution.')
-      return
-    }
-    logger.info(
-      { proposalCount, votingProposals },
-      'Active proposals fetched successfully',
-    )
-
-    const userFid = await getUserFid()
-    logger.debug({ userFid }, 'User FID retrieved.')
-    const followers = await getFollowerFids(userFid)
-    logger.info({ followerCount: followers.length }, 'Follower FIDs retrieved.')
-
-    for (const follower of followers) {
-      logger.debug({ follower }, 'Processing follower.')
-      // Retrieve the ethereum addresses associated with the current follower
-      let addresses = await getFollowerAddresses(follower)
-      logger.debug({ follower, addresses }, 'Follower addresses retrieved.')
-
-      addresses = pipe(
-        addresses,
-        filter((address) => /^0x[a-fA-F0-9]{40}$/.test(address)),
-      )
-      logger.debug(
-        { follower, addresses },
-        'Filtered valid Ethereum addresses.',
-      )
-
-      // If no addresses are found, skip to the next follower
-      if (addresses.length === 0) {
-        logger.info(
-          { follower },
-          'No valid addresses found for follower, skipping.',
-        )
-        continue
-      }
-
-      // Retrieve the DAOs associated with the current follower and their addresses
-      const daos = await getFollowerDAOs(follower, addresses)
-      logger.debug(
-        { follower, daos },
-        'DAOs associated with follower retrieved.',
-      )
-
-      // If no DAOs are found, skip to the next follower
-      if (!daos || daos.length <= 0) {
-        logger.info({ follower }, 'No DAOs found for follower, skipping.')
-        continue
-      }
-
-      // Retrieve notified proposals from cache
-      const cacheKey = `notified_voting_proposals_${follower.toString()}`
-      logger.debug({ cacheKey }, 'Retrieving notified proposals from cache.')
-      let notifiedProposals = await getCache<string[]>(cacheKey)
-      if (!notifiedProposals) {
-        logger.info(
-          { follower },
-          'No notified proposals found in cache, initializing new set.',
-        )
-        notifiedProposals = []
-      } else {
-        logger.debug(
-          { follower, notifiedProposals },
-          'Notified proposals retrieved from cache.',
-        )
-      }
-
-      // Convert notifiedProposals to a Set for efficient lookups
-      const notifiedProposalsSet = new Set(notifiedProposals)
-
-      // Loop through each proposal in the filtered proposals array
-      for (const proposal of votingProposals) {
-        logger.debug(
-          { proposalId: proposal.id },
-          'Processing proposal for follower.',
-        )
-        // If the proposal's DAO ID is not in the list of DAOs for the current follower, skip to the next proposal
-        if (!daos.includes(proposal.dao.id)) {
-          logger.debug(
-            { proposalId: proposal.id, follower },
-            'Proposal DAO ID not associated with follower, skipping.',
-          )
-          continue
-        }
-
-        // Check if this proposal has already been notified
-        if (notifiedProposalsSet.has(proposal.id)) {
-          logger.debug(
-            { proposalId: proposal.id, follower },
-            'Proposal already notified, skipping.',
-          )
-          continue
-        }
-
-        // Add the proposal to the queue for notifications
-        logger.info(
-          { proposalId: proposal.id, follower },
-          'Adding proposal to notification queue.',
-        )
-        await addToQueue({
-          type: 'notification',
-          recipient: follower,
-          proposal: proposal as unknown as JsonValue,
-        })
-
-        // Mark this proposal as notified
-        notifiedProposalsSet.add(proposal.id)
-        logger.debug(
-          { proposalId: proposal.id, follower },
-          'Proposal marked as notified.',
-        )
-      }
-
-      // Update the cache with the new set of notified proposals
-      logger.debug(
-        { cacheKey, notifiedProposals: Array.from(notifiedProposalsSet) },
-        'Updating cache with notified proposals.',
-      )
-      await setCache(cacheKey, Array.from(notifiedProposalsSet))
-    }
-  } catch (error) {
-    if (error instanceof Error) {
-      logger.error(
-        { message: error.message, stack: error.stack },
-        'Error executing async function',
-      )
-    } else {
-      logger.error({ error }, 'Unknown error occurred')
+interface ProposalTargetInput {
+  dao: {
+    id: string
+    chain: {
+      name: string
     }
   }
 }
 
+interface ProposalBuckets {
+  endingProposals: Proposal[]
+  votingProposals: Proposal[]
+}
+
 /**
- * Handles proposals that are ending soon and sends notifications.
+ * Checks whether the follower should be processed based on targeting options.
+ * @param follower - Farcaster follower FID.
+ * @param options - Optional targeting configuration.
+ * @returns True when this follower should be processed.
  */
-async function handleEndingProposals() {
-  try {
-    logger.info('Fetching active proposals ending soon...')
-    const { proposals } = await getActiveProposals()
-    logger.info({ proposals }, 'Active proposals ending soon retrieved.')
+function shouldProcessFollower(
+  follower: number,
+  options: TargetingOptions,
+): boolean {
+  if (!options.targetFids || options.targetFids.length === 0) {
+    return true
+  }
 
-    const currentUnixTimestamp = DateTime.now().toSeconds() // Current Unix timestamp in seconds
-    logger.debug({ currentUnixTimestamp }, 'Current Unix timestamp calculated.')
+  return options.targetFids.includes(follower)
+}
 
-    // Filter proposals where voting is ending soon
-    const endingProposals = filter(proposals, (proposal) => {
-      const voteEndTimestamp = Number(proposal.voteEnd)
-      logger.debug(
-        { proposalId: proposal.id, voteEndTimestamp },
-        'Evaluating proposal ending time.',
-      )
-      return (
-        voteEndTimestamp > currentUnixTimestamp &&
-        voteEndTimestamp <= currentUnixTimestamp + 86400
-      ) // Ending within the next day (86400 seconds)
-    })
+/**
+ * Checks whether a proposal matches test targeting filters.
+ * @param proposal - Proposal with chain and DAO metadata.
+ * @param options - Optional targeting configuration.
+ * @returns True when proposal matches active filters.
+ */
+function matchesProposalTargets(
+  proposal: ProposalTargetInput,
+  options: TargetingOptions,
+): boolean {
+  const daoId = proposal.dao.id.toLowerCase()
+  const chainName = proposal.dao.chain.name.toLowerCase()
+  const targetDaoIdsSet = options.targetDaoIds
+    ? new Set(options.targetDaoIds.map((value) => value.toLowerCase()))
+    : undefined
+  const targetChainsSet = options.targetChains
+    ? new Set(options.targetChains.map((value) => value.toLowerCase()))
+    : undefined
 
-    const proposalCount = endingProposals.length
-    if (proposalCount === 0) {
-      logger.warn('No ending proposals found, terminating execution.')
-      return
+  if (targetDaoIdsSet && targetDaoIdsSet.size > 0) {
+    if (!targetDaoIdsSet.has(daoId)) {
+      return false
     }
-    logger.info(
-      { proposalCount, endingProposals },
-      'Ending proposals fetched successfully',
+  }
+
+  if (targetChainsSet && targetChainsSet.size > 0) {
+    if (!targetChainsSet.has(chainName)) {
+      return false
+    }
+  }
+
+  return true
+}
+
+/**
+ * Splits proposals into voting and ending buckets.
+ * @param proposals - Candidate proposals.
+ * @param currentUnixTimestamp - Current unix timestamp in seconds.
+ * @returns Voting and ending proposal buckets.
+ */
+function splitProposalBuckets(
+  proposals: Proposal[],
+  currentUnixTimestamp: number,
+): ProposalBuckets {
+  const votingProposals = proposals.filter((proposal) => {
+    const voteStartTimestamp = Number(proposal.voteStart)
+    const voteEndTimestamp = Number(proposal.voteEnd)
+
+    return (
+      voteStartTimestamp < currentUnixTimestamp &&
+      voteEndTimestamp > currentUnixTimestamp
     )
+  })
 
-    const userFid = await getUserFid()
-    logger.debug({ userFid }, 'User FID retrieved.')
-    const followers = await getFollowerFids(userFid)
-    logger.info({ followerCount: followers.length }, 'Follower FIDs retrieved.')
+  const endingProposals = proposals.filter((proposal) => {
+    const voteEndTimestamp = Number(proposal.voteEnd)
 
-    for (const follower of followers) {
-      logger.debug({ follower }, 'Processing follower.')
-      // Retrieve the ethereum addresses associated with the current follower
-      let addresses = await getFollowerAddresses(follower)
-      logger.debug({ follower, addresses }, 'Follower addresses retrieved.')
+    return (
+      voteEndTimestamp > currentUnixTimestamp &&
+      voteEndTimestamp <= currentUnixTimestamp + 86400
+    )
+  })
 
-      addresses = pipe(
-        addresses,
-        filter((address) => /^0x[a-fA-F0-9]{40}$/.test(address)),
-      )
-      logger.debug(
-        { follower, addresses },
-        'Filtered valid Ethereum addresses.',
-      )
+  return {
+    endingProposals,
+    votingProposals,
+  }
+}
 
-      // If no addresses are found, skip to the next follower
-      if (addresses.length === 0) {
-        logger.info(
-          { follower },
-          'No valid addresses found for follower, skipping.',
-        )
+/**
+ * Processes notifications for a proposal set and follower list.
+ * @param followers - Followers to process.
+ * @param followerDaosMap - DAO ids per follower.
+ * @param proposals - Proposals to notify about.
+ * @param cacheKeyPrefix - Cache key prefix for notified proposal ids.
+ * @param options - Optional targeting configuration.
+ */
+async function notifyFollowersForProposals(
+  followers: number[],
+  followerDaosMap: Record<number, string[]>,
+  proposals: Proposal[],
+  cacheKeyPrefix: string,
+  options: TargetingOptions,
+): Promise<void> {
+  if (proposals.length === 0) {
+    return
+  }
+
+  for (const follower of followers) {
+    logger.debug({ follower }, 'Processing follower.')
+    const daos = followerDaosMap[follower] ?? []
+
+    if (daos.length === 0) {
+      logger.info({ follower }, 'No DAOs found for follower, skipping.')
+      continue
+    }
+
+    const cacheKey = `${cacheKeyPrefix}_${follower.toString()}`
+    let notifiedProposals = await getCache<string[]>(cacheKey)
+    if (!notifiedProposals) {
+      notifiedProposals = []
+    }
+
+    const notifiedProposalsSet = new Set(notifiedProposals)
+
+    for (const proposal of proposals) {
+      const proposalDaoKey = `${proposal.dao.id.toLowerCase()}:${proposal.dao.chain.id.toString()}`
+
+      if (!daos.includes(proposalDaoKey)) {
         continue
       }
 
-      // Retrieve the DAOs associated with the current follower and their addresses
-      const daos = await getFollowerDAOs(follower, addresses)
-      logger.debug(
-        { follower, daos },
-        'DAOs associated with follower retrieved.',
-      )
-
-      // If no DAOs are found, skip to the next follower
-      if (!daos || daos.length <= 0) {
-        logger.info({ follower }, 'No DAOs found for follower, skipping.')
+      if (notifiedProposalsSet.has(proposal.id)) {
         continue
       }
 
-      // Retrieve notified proposals from cache
-      const cacheKey = `notified_ending_proposals_${follower.toString()}`
-      logger.debug({ cacheKey }, 'Retrieving notified proposals from cache.')
-      let notifiedProposals = await getCache<string[]>(cacheKey)
-      if (!notifiedProposals) {
-        logger.info(
-          { follower },
-          'No notified proposals found in cache, initializing new set.',
-        )
-        notifiedProposals = []
-      } else {
-        logger.debug(
-          { follower, notifiedProposals },
-          'Notified proposals retrieved from cache.',
-        )
-      }
+      logger.info(
+        { proposalId: proposal.id, follower },
+        options.dryRun
+          ? 'Dry run: proposal would be added to notification queue.'
+          : 'Adding proposal to notification queue.',
+      )
 
-      // Convert notifiedProposals to a Set for efficient lookups
-      const notifiedProposalsSet = new Set(notifiedProposals)
-
-      // Loop through each proposal in the filtered proposals array
-      for (const proposal of endingProposals) {
-        logger.debug(
-          { proposalId: proposal.id },
-          'Processing proposal for follower.',
-        )
-        // If the proposal's DAO ID is not in the list of DAOs for the current follower, skip to the next proposal
-        if (!daos.includes(proposal.dao.id)) {
-          logger.debug(
-            { proposalId: proposal.id, follower },
-            'Proposal DAO ID not associated with follower, skipping.',
-          )
-          continue
-        }
-
-        // Check if this proposal has already been notified
-        if (notifiedProposalsSet.has(proposal.id)) {
-          logger.debug(
-            { proposalId: proposal.id, follower },
-            'Proposal already notified, skipping.',
-          )
-          continue
-        }
-
-        // Add the proposal to the queue for notifications
-        logger.info(
-          { proposalId: proposal.id, follower },
-          'Adding proposal to notification queue.',
-        )
+      if (!options.dryRun) {
         await addToQueue({
           type: 'notification',
           recipient: follower,
           proposal: proposal as unknown as JsonValue,
         })
-
-        // Mark this proposal as notified
-        notifiedProposalsSet.add(proposal.id)
-        logger.debug(
-          { proposalId: proposal.id, follower },
-          'Proposal marked as notified.',
-        )
       }
 
-      // Update the cache with the new set of notified proposals
-      logger.debug(
-        { cacheKey, notifiedProposals: Array.from(notifiedProposalsSet) },
-        'Updating cache with notified proposals.',
-      )
-      await setCache(cacheKey, Array.from(notifiedProposalsSet))
+      notifiedProposalsSet.add(proposal.id)
     }
-  } catch (error) {
-    if (error instanceof Error) {
-      logger.error(
-        { message: error.message, stack: error.stack },
-        'Error executing async function',
-      )
-    } else {
-      logger.error({ error }, 'Unknown error occurred')
+
+    if (!options.dryRun) {
+      await setCache(cacheKey, Array.from(notifiedProposalsSet))
     }
   }
 }
@@ -336,8 +184,88 @@ async function handleEndingProposals() {
  * This function triggers notifications for proposals that are currently active.
  * It ensures that notifications for voting proposals are processed first, followed
  * by ending proposals.
+ * @param options - Optional targeting configuration.
  */
-export async function processProposalsCommand() {
-  await handleVotingProposals()
-  await handleEndingProposals()
+export async function processProposalsCommand(options: TargetingOptions = {}) {
+  try {
+    logger.info('Fetching active proposals...')
+    const { proposals: activeProposals } = await getActiveProposals()
+    logger.info(
+      { proposalCount: activeProposals.length },
+      'Active proposals retrieved.',
+    )
+
+    const filteredProposals = activeProposals.filter((proposal) =>
+      matchesProposalTargets(proposal, options),
+    )
+
+    const currentUnixTimestamp = DateTime.now().toSeconds()
+    const { endingProposals, votingProposals } = splitProposalBuckets(
+      filteredProposals,
+      currentUnixTimestamp,
+    )
+
+    logger.info(
+      {
+        endingProposalCount: endingProposals.length,
+        votingProposalCount: votingProposals.length,
+      },
+      'Proposal buckets prepared.',
+    )
+
+    if (endingProposals.length === 0 && votingProposals.length === 0) {
+      logger.warn('No active or ending proposals found, terminating execution.')
+      return
+    }
+
+    const userFid = getUserFid()
+    const followers = await getFollowerFids(userFid)
+    const scopedFollowers = followers.filter((follower) =>
+      shouldProcessFollower(follower, options),
+    )
+
+    logger.info(
+      {
+        followerCount: followers.length,
+        scopedFollowerCount: scopedFollowers.length,
+      },
+      'Follower FIDs retrieved.',
+    )
+
+    if (scopedFollowers.length === 0) {
+      logger.warn(
+        'No followers matched targeting options, terminating execution.',
+      )
+      return
+    }
+
+    const followerDaosMap = await getFollowersDaoMap(scopedFollowers)
+
+    await notifyFollowersForProposals(
+      scopedFollowers,
+      followerDaosMap,
+      votingProposals,
+      'notified_voting_proposals',
+      options,
+    )
+
+    await notifyFollowersForProposals(
+      scopedFollowers,
+      followerDaosMap,
+      endingProposals,
+      'notified_ending_proposals',
+      options,
+    )
+  } catch (error) {
+    if (error instanceof Error) {
+      logger.error(
+        { message: error.message, stack: error.stack },
+        'Error executing async function',
+      )
+      throw error
+    } else {
+      logger.error({ error }, 'Unknown error occurred')
+      throw new Error(String(error))
+    }
+  }
 }

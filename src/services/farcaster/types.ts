@@ -1,9 +1,22 @@
 import { NonNegative } from 'type-fest'
 
 export interface Env {
-  WARPCAST_AUTH_TOKEN: string
-  WARPCAST_API_KEY: string
-  WARPCAST_BASE_URL: string
+  FARCASTER_API_KEY: string
+  FARCASTER_API_BASE_URL: string
+  FARCASTER_APP_FID: string
+  FARCASTER_APP_KEY?: string
+  FARCASTER_APP_KEY_PUBLIC?: string
+}
+
+export interface EnvBase {
+  FARCASTER_API_KEY: string
+  FARCASTER_API_BASE_URL: string
+}
+
+export interface EnvWithAppKeys extends EnvBase {
+  FARCASTER_APP_FID: string
+  FARCASTER_APP_KEY: string
+  FARCASTER_APP_KEY_PUBLIC: string
 }
 
 export interface Like {

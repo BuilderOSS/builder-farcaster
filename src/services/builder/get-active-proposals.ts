@@ -1,8 +1,9 @@
 import { chainEndpoints } from '@/services/builder/index'
+import { runBuilderRequestWithRetry } from '@/services/builder/request'
 import { Proposal } from '@/services/builder/types'
 import { gql, GraphQLClient } from 'graphql-request'
 import { DateTime } from 'luxon'
-import { flatMap, pipe, uniqueBy } from 'remeda'
+import { pipe, uniqueBy } from 'remeda'
 import { JsonObject } from 'type-fest'
 
 type Data = {
@@ -47,10 +48,14 @@ export const getActiveProposals = async (): Promise<Result> => {
   `
 
   try {
-    const proposalsPromises = chainEndpoints.map(
-      async ({ chain, endpoint }) => {
+    const chainProposalGroups = await Promise.all(
+      chainEndpoints.map(async ({ chain, endpoint }) => {
         const client = new GraphQLClient(endpoint)
-        const response = await client.request<Data>(query)
+        const response = await runBuilderRequestWithRetry(
+          async () => client.request<Data>(query),
+          `get-active-proposals chain=${chain.name}`,
+        )
+
         return response.proposals.map((proposal) => ({
           ...proposal,
           dao: {
@@ -58,13 +63,13 @@ export const getActiveProposals = async (): Promise<Result> => {
             chain,
           },
         }))
-      },
+      }),
     )
 
-    const results = await Promise.all(proposalsPromises)
+    const allProposals = chainProposalGroups.flat()
+
     const uniqueProposals = pipe(
-      results,
-      flatMap((proposals) => proposals),
+      allProposals,
       uniqueBy((proposal) => proposal.id),
     )
     return { proposals: uniqueProposals }

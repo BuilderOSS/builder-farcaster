@@ -1,5 +1,5 @@
-import { fetchRequest, HttpRequestMethod } from '@/services/warpcast/index'
-import { Env } from '@/services/warpcast/types'
+import { fetchRequest, HttpRequestMethod } from '@/services/farcaster/index'
+import { Env } from '@/services/farcaster/types'
 
 interface Result {
   success: boolean
@@ -10,7 +10,7 @@ interface Response {
 }
 
 /**
- * Sends a direct cast request to the warpcast server.
+ * Sends a direct cast request to the Farcaster client API.
  * @param env - The environment configuration.
  * @param recipientFid - The FID of the recipient.
  * @param message - The message to be sent.
@@ -23,7 +23,10 @@ export const sendDirectCast = async (
   message: string,
   idempotencyKey: string,
 ): Promise<Result> => {
-  const { WARPCAST_API_KEY: apiKey, WARPCAST_BASE_URL: baseUrl } = env
+  const {
+    FARCASTER_API_KEY: farcasterApiKey,
+    FARCASTER_API_BASE_URL: baseUrl,
+  } = env
 
   const body = {
     recipientFid,
@@ -33,7 +36,7 @@ export const sendDirectCast = async (
 
   const { result } = await fetchRequest<Response>(
     baseUrl,
-    apiKey,
+    farcasterApiKey,
     HttpRequestMethod.PUT,
     '/v2/ext-send-direct-cast',
     { json: body },

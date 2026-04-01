@@ -6,7 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### 📚 Documentation
 
-- *(deploy)* Update deployment instructions and organize sections
+- _(deploy)_ Update deployment instructions and organize sections
 
 ## [1.1.4] - 2024-11-25
 
@@ -18,89 +18,89 @@ All notable changes to this project will be documented in this file.
 
 ### 🚜 Refactor
 
-- *(commands)* Rename handlers to commands for consistency
+- _(commands)_ Rename handlers to commands for consistency
 
 ## [1.1.2] - 2024-11-16
 
 ### 📚 Documentation
 
-- *(readme)* Remove setup and deployment instructions
-- *(deploy)* Add detailed deployment instructions
-- *(setup)* Add comprehensive setup instructions
+- _(readme)_ Remove setup and deployment instructions
+- _(deploy)_ Add detailed deployment instructions
+- _(setup)_ Add comprehensive setup instructions
 
 ## [1.1.1] - 2024-11-15
 
 ### 📚 Documentation
 
-- *(readme)* Update setup and deployment instructions
+- _(readme)_ Update setup and deployment instructions
 
 ## [1.1.0] - 2024-11-11
 
 ### 🚀 Features
 
-- *(logger)* Allow custom log level via env var
-- *(cli)* Add `warpcast` command with `token` sub-command
-- *(scripts)* Add `dev:tokengen` script
-- *(warpcast)* Add `genAuthToken` function to warpcast service
-- *(warpcast-token)* Add token generation command
+- _(logger)_ Allow custom log level via env var
+- _(cli)_ Add `farcaster` command with `token` sub-command
+- _(scripts)_ Add `dev:tokengen` script
+- _(farcaster)_ Add `genAuthToken` function to farcaster service
+- _(farcaster-token)_ Add token generation command
 
 ### 🚜 Refactor
 
-- *(warpcast)* Rename `WARPCAST_ACCESS_TOKEN` to `WARPCAST_AUTH_TOKEN`
+- _(farcaster)_ Rename `FARCASTER_ACCESS_TOKEN` to `FARCASTER_AUTH_TOKEN`
 
 ## [1.0.5] - 2024-11-10
 
 ### 🚜 Refactor
 
-- *(logger)* Simplify and extend logger configuration
+- _(logger)_ Simplify and extend logger configuration
 
 ## [1.0.4] - 2024-11-10
 
 ### 📚 Documentation
 
-- *(readme)* Add detailed setup instructions
+- _(readme)_ Add detailed setup instructions
 
 ## [1.0.3] - 2024-11-10
 
 ### ⚙️ Miscellaneous Tasks
 
-- *(build)* Set `DATABASE_URL` at job level
+- _(build)_ Set `DATABASE_URL` at job level
 
 ## [1.0.1] - 2024-11-10
 
 ### ⚙️ Miscellaneous Tasks
 
-- *(build)* Update `DATABASE_URL` environment variable source
+- _(build)_ Update `DATABASE_URL` environment variable source
 
 ## [1.0.0] - 2024-11-10
 
 ### ⚙️ Miscellaneous Tasks
 
-- *(deploy)* Update from secrets to vars for workflow env
-- *(deploy)* Switch from `env` to `vars` for remote config
+- _(deploy)_ Update from secrets to vars for workflow env
+- _(deploy)_ Switch from `env` to `vars` for remote config
 
 ## [1.0.0-beta.3] - 2024-11-10
 
 ### ⚙️ Miscellaneous Tasks
 
-- *(deploy)* Update variable to `PACKAGE_VERSION` for clarity
-- *(deploy)* Improve pnpm cache handling in GitHub Actions
-- *(deploy)* Remove manual trigger from deployment workflow
+- _(deploy)_ Update variable to `PACKAGE_VERSION` for clarity
+- _(deploy)_ Improve pnpm cache handling in GitHub Actions
+- _(deploy)_ Remove manual trigger from deployment workflow
 
 ## [1.0.0-beta.2] - 2024-11-10
 
 ### 🚜 Refactor
 
-- *(config)* Migrate prettier config to `prettier.config.mjs`
+- _(config)_ Migrate prettier config to `prettier.config.mjs`
 
 ### ⚙️ Miscellaneous Tasks
 
-- *(deploy)* Switch from secrets to vars for deployment
-- *(deploy)* Simplify and streamline deploy workflow
-- *(deploy)* Streamline deploy process and add manual trigger
-- *(deploy)* Move environment variables to job-level definition
-- *(deploy)* Prevent creation of existing directories
-- *(deploy)* Add `v` prefix to version in GitHub env
+- _(deploy)_ Switch from secrets to vars for deployment
+- _(deploy)_ Simplify and streamline deploy workflow
+- _(deploy)_ Streamline deploy process and add manual trigger
+- _(deploy)_ Move environment variables to job-level definition
+- _(deploy)_ Prevent creation of existing directories
+- _(deploy)_ Add `v` prefix to version in GitHub env
 
 ## [1.0.0-beta.1] - 2024-11-10
 
@@ -112,238 +112,238 @@ All notable changes to this project will be documented in this file.
 
 ### 🚜 Refactor
 
-- *(warpcast)* Simplify `getFollowers` method
+- _(farcaster)_ Simplify `getFollowers` method
 
 ## [1.0.0-alpha.35] - 2024-11-01
 
 ### 🚀 Features
 
-- *(builder)* Filter active proposals by current time
+- _(builder)_ Filter active proposals by current time
 
 ### 🚜 Refactor
 
-- *(proposals-handlers)* Process proposals notifications sequentially
+- _(proposals-handlers)_ Process proposals notifications sequentially
 
 ## [1.0.0-alpha.34] - 2024-11-01
 
 ### 🚀 Features
 
-- *(handlers)* Enhance voting message with proposal URL
+- _(handlers)_ Enhance voting message with proposal URL
 
 ### 🚜 Refactor
 
-- *(queues-handler)* Simplify `proposal` and `daos` types
+- _(queues-handler)_ Simplify `proposal` and `daos` types
 
 ## [1.0.0-alpha.33] - 2024-11-01
 
 ### 🐛 Bug Fixes
 
-- *(proposals-handlers)* Correct voting time comparison
+- _(proposals-handlers)_ Correct voting time comparison
 
 ## [1.0.0-alpha.32] - 2024-10-31
 
 ### 🐛 Bug Fixes
 
-- *(proposals-handlers)* Filter active proposals by vote start date
+- _(proposals-handlers)_ Filter active proposals by vote start date
 
 ### 🚜 Refactor
 
-- *(builder)* Extract and centralize endpoint variables
-- *(builder)* Add chain info to endpoints and daos
-- *(services)* Unify proposal fetching methods
-- *(handlers)* Streamline voting proposals notification
-- *(proposals-handlers)* Streamline ending proposals handling
+- _(builder)_ Extract and centralize endpoint variables
+- _(builder)_ Add chain info to endpoints and daos
+- _(services)_ Unify proposal fetching methods
+- _(handlers)_ Streamline voting proposals notification
+- _(proposals-handlers)_ Streamline ending proposals handling
 
 ### ⚙️ Miscellaneous Tasks
 
-- *(package)* Add resolution for elliptic dependency
+- _(package)_ Add resolution for elliptic dependency
 
 ## [1.0.0-alpha.31] - 2024-10-30
 
 ### ◀️ Revert
 
-- *(workflows)* Add monthly cron job to process invites
+- _(workflows)_ Add monthly cron job to process invites
 
 ## [1.0.0-alpha.30] - 2024-10-30
 
 ### 🚜 Refactor
 
-- *(queues-handler)* Break long message strings into lines
+- _(queues-handler)_ Break long message strings into lines
 
 ## [1.0.0-alpha.29] - 2024-10-30
 
 ### 🚜 Refactor
 
-- *(handlers)* Clean dao names and update message format
+- _(handlers)_ Clean dao names and update message format
 
 ## [1.0.0-alpha.28] - 2024-10-30
 
 ### 🚜 Refactor
 
-- *(queues-handler)* Simplify message generation for DAO notifications
+- _(queues-handler)_ Simplify message generation for DAO notifications
 
 ## [1.0.0-alpha.27] - 2024-10-30
 
 ### 🚀 Features
 
-- *(builder)* Add method to fetch DAO token owners
-- *(cli)* Add invites processing command
-- *(builder)* Increase default value for `first` to 1000
-- *(warpcast)* Add `getUserByVerification` service
-- *(builder)* Add `ownerCount` to `Dao` interface
+- _(builder)_ Add method to fetch DAO token owners
+- _(cli)_ Add invites processing command
+- _(builder)_ Increase default value for `first` to 1000
+- _(farcaster)_ Add `getUserByVerification` service
+- _(builder)_ Add `ownerCount` to `Dao` interface
 
 ### 🐛 Bug Fixes
 
-- *(invites-handler)* Use `continue` instead of `return` for loop
+- _(invites-handler)_ Use `continue` instead of `return` for loop
 
 ### 🚜 Refactor
 
-- *(builder)* Rename `daotokenOwners` to `owners`
-- *(services)* Restructure `getDAOsTokenOwners` pagination logic
-- *(invites-handler)* Enhance owner to DAOs mapping
-- *(handlers)* Extract follower and user functions
-- *(invites-handler)* Map DAO owners to Farcaster users
-- *(invites-handler)* Restructure and improve error handling
-- *(invites-handler)* Add caching to invites handler
-- *(invites-handler)* Relocate `handleInvites` function
-- *(invites-handler)* Add `ownerCount` to `Dao` mapping
-- *(invites-handler)* Log size of `sortedFidToDaoMap`
-- *(invites-handler)* Add follower filtering for DAOs
-- *(invites-handler)* Enhance logging for invite sorting
-- *(invites-handler)* Enable scheduled invitation logic
-- *(invites-handler)* Add debug logging for `fidDaoEntries` count
-- *(queues-handler)* Add support for invitation tasks
-- *(queues-handler)* Enhance notification messages
-- *(invites-handler)* Remove unnecessary time checks
+- _(builder)_ Rename `daotokenOwners` to `owners`
+- _(services)_ Restructure `getDAOsTokenOwners` pagination logic
+- _(invites-handler)_ Enhance owner to DAOs mapping
+- _(handlers)_ Extract follower and user functions
+- _(invites-handler)_ Map DAO owners to Farcaster users
+- _(invites-handler)_ Restructure and improve error handling
+- _(invites-handler)_ Add caching to invites handler
+- _(invites-handler)_ Relocate `handleInvites` function
+- _(invites-handler)_ Add `ownerCount` to `Dao` mapping
+- _(invites-handler)_ Log size of `sortedFidToDaoMap`
+- _(invites-handler)_ Add follower filtering for DAOs
+- _(invites-handler)_ Enhance logging for invite sorting
+- _(invites-handler)_ Enable scheduled invitation logic
+- _(invites-handler)_ Add debug logging for `fidDaoEntries` count
+- _(queues-handler)_ Add support for invitation tasks
+- _(queues-handler)_ Enhance notification messages
+- _(invites-handler)_ Remove unnecessary time checks
 
 ### ⚙️ Miscellaneous Tasks
 
-- *(scripts)* Add `dev:invites` script to `package.json`
-- *(workflows)* Add monthly cron job to process invites
-- *(workflows)* Update cron schedule for invite processing
+- _(scripts)_ Add `dev:invites` script to `package.json`
+- _(workflows)_ Add monthly cron job to process invites
+- _(workflows)_ Update cron schedule for invite processing
 
 ## [1.0.0-alpha.26] - 2024-10-28
 
 ### 🚀 Features
 
-- *(builder)* Add `getActiveEndingProposals` service
-- *(proposals-handlers)* Add ending proposals notifications
-- *(handlers)* Enhance proposal handling logic
-- *(handlers)* Enhance proposal notification processing
+- _(builder)_ Add `getActiveEndingProposals` service
+- _(proposals-handlers)_ Add ending proposals notifications
+- _(handlers)_ Enhance proposal handling logic
+- _(handlers)_ Enhance proposal notification processing
 
 ### 🐛 Bug Fixes
 
-- *(builder)* Update proposal sorting and filtering logic
-- *(handlers)* Update cache key in `handleActiveProposals`
-- *(proposals-handlers)* Update proposals time range to 3 days
-- *(builder)* Correct comparison operator in GraphQL query
+- _(builder)_ Update proposal sorting and filtering logic
+- _(handlers)_ Update cache key in `handleActiveProposals`
+- _(proposals-handlers)_ Update proposals time range to 3 days
+- _(builder)_ Correct comparison operator in GraphQL query
 
 ### 🚜 Refactor
 
-- *(builder)* Add new types and remove local interfaces
-- *(handlers)* Rename `getActiveProposals` to `getActiveVotingProposals`
-- *(handlers)* Rename and refactor proposal handling functions
-- *(handlers)* Rename proposal handling methods
-- *(proposals-handlers)* Rename `endTime` to `voteEnd`
+- _(builder)_ Add new types and remove local interfaces
+- _(handlers)_ Rename `getActiveProposals` to `getActiveVotingProposals`
+- _(handlers)_ Rename and refactor proposal handling functions
+- _(handlers)_ Rename proposal handling methods
+- _(proposals-handlers)_ Rename `endTime` to `voteEnd`
 
 ## [1.0.0-alpha.25] - 2024-10-27
 
 ### 🚀 Features
 
-- *(proposals-handlers)* Validate follower addresses
+- _(proposals-handlers)_ Validate follower addresses
 
 ### 🚜 Refactor
 
-- *(builder)* Rename `DaoTokenOwner` and `daotokenOwners`
+- _(builder)_ Rename `DaoTokenOwner` and `daotokenOwners`
 
 ### ⚙️ Miscellaneous Tasks
 
-- *(gitignore)* Update `.gitignore` for graphql config
-- *(graphql)* Move `builder.graphql` to `schemas` directory
+- _(gitignore)_ Update `.gitignore` for graphql config
+- _(graphql)_ Move `builder.graphql` to `schemas` directory
 
 ## [1.0.0-alpha.24] - 2024-10-27
 
 ### 🎨 Styling
 
-- *(graphql)* Rename `builder.gql` to `builder.graphql`
+- _(graphql)_ Rename `builder.gql` to `builder.graphql`
 
 ### ⚙️ Miscellaneous Tasks
 
-- *(gitignore)* Add graphql configuration to .gitignore
+- _(gitignore)_ Add graphql configuration to .gitignore
 
 ## [1.0.0-alpha.23] - 2024-10-19
 
 ### ⚙️ Miscellaneous Tasks
 
-- *(deploy)* Move prisma db copy step to install phase
+- _(deploy)_ Move prisma db copy step to install phase
 
 ## [1.0.0-alpha.22] - 2024-10-19
 
 ### ⚙️ Miscellaneous Tasks
 
-- *(deploy)* Add step to copy prisma db files during deployment
+- _(deploy)_ Add step to copy prisma db files during deployment
 
 ## [1.0.0-alpha.21] - 2024-10-15
 
 ### ⚙️ Miscellaneous Tasks
 
-- *(deploy)* Remove excluded SQLite files before rsync
+- _(deploy)_ Remove excluded SQLite files before rsync
 
 ## [1.0.0-alpha.20] - 2024-10-15
 
 ### ⚙️ Miscellaneous Tasks
 
-- *(deploy)* Update deploy workflow to refine file inclusion
+- _(deploy)_ Update deploy workflow to refine file inclusion
 
 ## [1.0.0-alpha.19] - 2024-10-15
 
 ### ⚙️ Miscellaneous Tasks
 
-- *(deploy)* Update rsync rules for prisma files
-- *(scripts)* Update `prepare` script to handle errors
+- _(deploy)_ Update rsync rules for prisma files
+- _(scripts)_ Update `prepare` script to handle errors
 
 ## [1.0.0-alpha.18] - 2024-10-15
 
 ### ⚙️ Miscellaneous Tasks
 
-- *(deploy)* Update rsync include patterns for prisma
+- _(deploy)_ Update rsync include patterns for prisma
 
 ### ◀️ Revert
 
-- *(deploy)* Add tty allocation to ssh commands
+- _(deploy)_ Add tty allocation to ssh commands
 
 ## [1.0.0-alpha.17] - 2024-10-15
 
 ### ◀️ Revert
 
-- *(deploy)* Update rsync include patterns for prisma
+- _(deploy)_ Update rsync include patterns for prisma
 
 ## [1.0.0-alpha.16] - 2024-10-15
 
 ### ⚙️ Miscellaneous Tasks
 
-- *(deploy)* Update rsync include patterns for prisma
-- *(deploy)* Add tty allocation to ssh commands
+- _(deploy)_ Update rsync include patterns for prisma
+- _(deploy)_ Add tty allocation to ssh commands
 
 ## [1.0.0-alpha.15] - 2024-10-15
 
 ### ⚙️ Miscellaneous Tasks
 
-- *(deploy)* Remove rsync inline comments
+- _(deploy)_ Remove rsync inline comments
 
 ## [1.0.0-alpha.14] - 2024-10-15
 
 ### 🐛 Bug Fixes
 
-- *(warpcast)* Type-cast response json to `FetchResponse`
+- _(farcaster)_ Type-cast response json to `FetchResponse`
 
 ### ⚙️ Miscellaneous Tasks
 
-- *(scripts)* Update dev and build scripts
-- *(scripts)* Update and streamline build scripts
-- *(deploy)* Update rsync to exclude SQLite files
-- *(workflows)* Optimize PNPM store caching
-- *(workflows)* Streamline deploy script comments
+- _(scripts)_ Update dev and build scripts
+- _(scripts)_ Update and streamline build scripts
+- _(deploy)_ Update rsync to exclude SQLite files
+- _(workflows)_ Optimize PNPM store caching
+- _(workflows)_ Streamline deploy script comments
 
 ## [1.0.0-alpha.13] - 2024-10-15
 
@@ -355,258 +355,258 @@ All notable changes to this project will be documented in this file.
 
 ### ⚙️ Miscellaneous Tasks
 
-- *(deploy)* Add logs directory and update log paths
-- *(deploy)* Update cron job frequency and command
+- _(deploy)_ Add logs directory and update log paths
+- _(deploy)_ Update cron job frequency and command
 
 ## [1.0.0-alpha.11] - 2024-10-14
 
 ### ⚙️ Miscellaneous Tasks
 
-- *(deploy)* Update cron job setup in `deploy.yml`
+- _(deploy)_ Update cron job setup in `deploy.yml`
 
 ## [1.0.0-alpha.10] - 2024-10-14
 
 ### ⚙️ Miscellaneous Tasks
 
-- *(deploy)* Set up crontab tasks in deploy workflow
+- _(deploy)_ Set up crontab tasks in deploy workflow
 
 ## [1.0.0-alpha.9] - 2024-10-14
 
 ### ⚙️ Miscellaneous Tasks
 
-- *(deploy)* Add `NODE_ENV` to environment file creation
-- *(deploy)* Add prisma migration and generation steps
+- _(deploy)_ Add `NODE_ENV` to environment file creation
+- _(deploy)_ Add prisma migration and generation steps
 
 ## [1.0.0-alpha.8] - 2024-10-14
 
 ### ⚙️ Miscellaneous Tasks
 
-- *(deploy)* Include LICENSE file in deployment
-- *(scripts)* Update `prepare` script to handle errors
+- _(deploy)_ Include LICENSE file in deployment
+- _(scripts)_ Update `prepare` script to handle errors
 
 ## [1.0.0-alpha.7] - 2024-10-14
 
 ### ⚙️ Miscellaneous Tasks
 
-- *(deploy)* Reorder steps for environment setup
+- _(deploy)_ Reorder steps for environment setup
 
 ## [1.0.0-alpha.6] - 2024-10-14
 
 ### 📚 Documentation
 
-- *(package)* Update `description` with project details
+- _(package)_ Update `description` with project details
 
 ### ⚙️ Miscellaneous Tasks
 
-- *(workflows)* Remove usage guard job in `build.yml`
-- *(workflows)* Enhance deploy pipeline with SSH and build steps
+- _(workflows)_ Remove usage guard job in `build.yml`
+- _(workflows)_ Enhance deploy pipeline with SSH and build steps
 
 ## [1.0.0-alpha.5] - 2024-10-12
 
 ### ⚙️ Miscellaneous Tasks
 
-- *(deploy)* Update environment variables in `deploy.yml`
-- *(build)* Add `DATABASE_URL` to build pipeline
+- _(deploy)_ Update environment variables in `deploy.yml`
+- _(build)_ Add `DATABASE_URL` to build pipeline
 
 ## [1.0.0-alpha.4] - 2024-10-12
 
 ### 🐛 Bug Fixes
 
-- *(proposals-handlers)* Remove unnecessary cache age parameter
+- _(proposals-handlers)_ Remove unnecessary cache age parameter
 
 ### 🚜 Refactor
 
-- *(cache)* Make `maxAgeMs` optional in `getCache`
-- *(queues-handler)* Improve task processing flow
+- _(cache)_ Make `maxAgeMs` optional in `getCache`
+- _(queues-handler)_ Improve task processing flow
 
 ### 📚 Documentation
 
-- *(handlers)* Add jsdoc for `consumeQueue` function
-- *(cli)* Enhance command descriptions
+- _(handlers)_ Add jsdoc for `consumeQueue` function
+- _(cli)_ Enhance command descriptions
 
 ### 🎨 Styling
 
-- *(types)* Update import statements to use `type`
+- _(types)_ Update import statements to use `type`
 
 ### ⚙️ Miscellaneous Tasks
 
-- *(env)* Add `.env.template` for environment variables
-- *(scripts)* Update `prebuild` and add `pretest` script
-- *(vite)* Remove cjs format in build config
+- _(env)_ Add `.env.template` for environment variables
+- _(scripts)_ Update `prebuild` and add `pretest` script
+- _(vite)_ Remove cjs format in build config
 
 ## [1.0.0-alpha.3] - 2024-10-10
 
 ### 🚀 Features
 
-- *(prisma)* Add Queue model to database schema
-- *(queue)* Add task queue management functions
-- *(config)* Add `WARPCAST_API_KEY` to env schema
-- *(warpcast)* Add `sendDirectCast` service method
-- *(queue)* Generate unique task IDs in `addToQueue`
-- *(index)* Add proposals to notification queue
-- *(queue)* Add retries functionality to tasks
-- *(utils)* Add `toRelativeTime` function
-- *(vite)* Add node polyfills plugin
-- *(cli)* Add command-line interface for proposal handling
-- *(utils)* Enhance `toRelativeTime` function units
-- *(queue)* Add queue processing and notification handling
-- *(utils)* Add `isPast` function to check past timestamps
-- *(queues-handler)* Enhance proposal time messages
+- _(prisma)_ Add Queue model to database schema
+- _(queue)_ Add task queue management functions
+- _(config)_ Add `FARCASTER_API_KEY` to env schema
+- _(farcaster)_ Add `sendDirectCast` service method
+- _(queue)_ Generate unique task IDs in `addToQueue`
+- _(index)_ Add proposals to notification queue
+- _(queue)_ Add retries functionality to tasks
+- _(utils)_ Add `toRelativeTime` function
+- _(vite)_ Add node polyfills plugin
+- _(cli)_ Add command-line interface for proposal handling
+- _(utils)_ Enhance `toRelativeTime` function units
+- _(queue)_ Add queue processing and notification handling
+- _(utils)_ Add `isPast` function to check past timestamps
+- _(queues-handler)_ Enhance proposal time messages
 
 ### 🐛 Bug Fixes
 
-- *(builder)* Change proposal sorting order to asc
+- _(builder)_ Change proposal sorting order to asc
 
 ### 🚜 Refactor
 
-- *(index)* Move proposal handling logic to `proposals-handlers`
+- _(index)_ Move proposal handling logic to `proposals-handlers`
 
 ### 🎨 Styling
 
-- *(queues-handler)* Enhance proposal message format
+- _(queues-handler)_ Enhance proposal message format
 
 ### ⚙️ Miscellaneous Tasks
 
-- *(gitignore)* Ignore `dev.db-journal` in `prisma`
-- *(scripts)* Update `start` script to process proposals
-- *(vite)* Remove unused node polyfills plugin
-- *(prettier)* Add prisma plugin to `.prettierrc.json`
-- *(scripts)* Update `test` script to allow no tests
+- _(gitignore)_ Ignore `dev.db-journal` in `prisma`
+- _(scripts)_ Update `start` script to process proposals
+- _(vite)_ Remove unused node polyfills plugin
+- _(prettier)_ Add prisma plugin to `.prettierrc.json`
+- _(scripts)_ Update `test` script to allow no tests
 
 ## [1.0.0-alpha.2] - 2024-10-09
 
 ### 🚀 Features
 
-- *(builder)* Add `Env` interface to `types.ts`
-- *(config)* Add builder subgraph URLs to env schema
-- *(services)* Add `getDAOsForOwners` to fetch DAO data
-- *(build)* Enhance `vite.config.ts` for better build process
-- *(index)* Fetch and cache DAOs for follower fids
-- *(builder)* Add `getActiveProposals` function
-- *(index)* Add proposal caching and fetching logic
-- *(logger)* Set log level based on environment
-- *(builder)* Add `name` field to dao in proposals
+- _(builder)_ Add `Env` interface to `types.ts`
+- _(config)_ Add builder subgraph URLs to env schema
+- _(services)_ Add `getDAOsForOwners` to fetch DAO data
+- _(build)_ Enhance `vite.config.ts` for better build process
+- _(index)_ Fetch and cache DAOs for follower fids
+- _(builder)_ Add `getActiveProposals` function
+- _(index)_ Add proposal caching and fetching logic
+- _(logger)_ Set log level based on environment
+- _(builder)_ Add `name` field to dao in proposals
 
 ### 🐛 Bug Fixes
 
-- *(index)* Log `verificationAddresses` object on fetch
-- *(builder)* Remove redundant vote time filters
-- *(index)* Log comprehensive debug information
+- _(index)_ Log `verificationAddresses` object on fetch
+- _(builder)_ Remove redundant vote time filters
+- _(index)_ Log comprehensive debug information
 
 ### 🚜 Refactor
 
-- *(types)* Update `Env` type to include `BuilderEnv`
-- *(builder)* Rename `fetch-daos-for-owners` to `get-daos-for-owners`
-- *(cache)* Standardize cache keys with `toString` method
-- *(index)* Simplify type imports and references
-- *(index)* Extract follower caching logic to function
-- *(index)* Extract `getFollowerAddresses` function
-- *(index)* Extract dao fetching logic to `getFollowerDAOs`
-- *(index)* Extract `getUserFid` function
-- *(index)* Remove redundant log data and rename vars
-- *(logging)* Simplify and structure logging details
-- *(logger)* Restructure log messages for clarity
-- *(index)* Consolidate follower processing logic
-- *(index)* Reorder logic for proposal handling
-- *(index)* Simplify follower address and DAOs check
-- *(index)* Streamline data fetching and caching
-- *(index)* Extract active proposals handling to function
-- *(index)* Add logging for proposal processing
+- _(types)_ Update `Env` type to include `BuilderEnv`
+- _(builder)_ Rename `fetch-daos-for-owners` to `get-daos-for-owners`
+- _(cache)_ Standardize cache keys with `toString` method
+- _(index)_ Simplify type imports and references
+- _(index)_ Extract follower caching logic to function
+- _(index)_ Extract `getFollowerAddresses` function
+- _(index)_ Extract dao fetching logic to `getFollowerDAOs`
+- _(index)_ Extract `getUserFid` function
+- _(index)_ Remove redundant log data and rename vars
+- _(logging)_ Simplify and structure logging details
+- _(logger)_ Restructure log messages for clarity
+- _(index)_ Consolidate follower processing logic
+- _(index)_ Reorder logic for proposal handling
+- _(index)_ Simplify follower address and DAOs check
+- _(index)_ Streamline data fetching and caching
+- _(index)_ Extract active proposals handling to function
+- _(index)_ Add logging for proposal processing
 
 ### ⚙️ Miscellaneous Tasks
 
-- *(tsconfig)* Change moduleResolution to `bundler`
+- _(tsconfig)_ Change moduleResolution to `bundler`
 
 ## [1.0.0-alpha.1] - 2024-10-09
 
 ### 🚀 Features
 
-- *(index)* Enhance logging and configuration management
-- *(env)* Add environment variable validation
-- *(types)* Add `Env` type for environment configurations
-- *(warpcast)* Add functionality to fetch user followers
-- *(logger)* Configure pino logger for development
-- *(services)* Add `getMe` function to warpcast service
-- *(logger)* Add custom logger using pino
-- *(index)* Add follower retrieval functionality
-- *(cache)* Add cache management with `PrismaClient`
-- *(prisma)* Add initial Prisma schema for caching
-- *(migrations)* Add initial cache table
-- *(cache)* Add caching for `getMe` and `getFollowers`
-- *(services)* Add `getVerifications` method to `warpcast`
-- *(index)* Add caching for follower verifications
+- _(index)_ Enhance logging and configuration management
+- _(env)_ Add environment variable validation
+- _(types)_ Add `Env` type for environment configurations
+- _(farcaster)_ Add functionality to fetch user followers
+- _(logger)_ Configure pino logger for development
+- _(services)_ Add `getMe` function to farcaster service
+- _(logger)_ Add custom logger using pino
+- _(index)_ Add follower retrieval functionality
+- _(cache)_ Add cache management with `PrismaClient`
+- _(prisma)_ Add initial Prisma schema for caching
+- _(migrations)_ Add initial cache table
+- _(cache)_ Add caching for `getMe` and `getFollowers`
+- _(services)_ Add `getVerifications` method to `farcaster`
+- _(index)_ Add caching for follower verifications
 
 ### 🐛 Bug Fixes
 
-- *(package)* Set correct entry point in `main`
-- *(package)* Update start script to run correct entry point
+- _(package)_ Set correct entry point in `main`
+- _(package)_ Update start script to run correct entry point
 
 ### 🚜 Refactor
 
-- *(index)* Simplify server initialization
-- *(tsconfig)* Simplify and update configuration
-- *(index)* Simplify self-executing function
-- *(config)* Rename `env.ts` to `config.ts` and update types
-- *(index)* Replace `dotenv` with custom `config` module
-- *(index)* Replace inline logger with external logger
-- *(index)* Cache user fid instead of entire user object
-- *(cache)* Update type for `getCache` method
-- *(index)* Update import paths to use aliases
+- _(index)_ Simplify server initialization
+- _(tsconfig)_ Simplify and update configuration
+- _(index)_ Simplify self-executing function
+- _(config)_ Rename `env.ts` to `config.ts` and update types
+- _(index)_ Replace `dotenv` with custom `config` module
+- _(index)_ Replace inline logger with external logger
+- _(index)_ Cache user fid instead of entire user object
+- _(cache)_ Update type for `getCache` method
+- _(index)_ Update import paths to use aliases
 
 ### ⚙️ Miscellaneous Tasks
 
-- *(gitignore)* Update ignore list for lock file
-- *(package)* Add `start` script to `package.json`
-- *(build)* Add initial `tsconfig.json` for TypeScript setup
-- *(scripts)* Add `clean` script to remove `dist` folder
-- *(build)* Switch from pnpm to bun for setup and build
-- *(scripts)* Add `lint` script using `eslint`
-- *(package)* Add `type` field to `package.json`
-- *(lint-staged)* Add `lint-staged` config for code formatting
-- *(linting)* Add ESLint configuration
-- *(cliff)* Add git-cliff configuration
-- *(style)* Add prettier configuration
-- *(husky)* Add pre-commit hook for linting and testing
-- *(scripts)* Add vite commands for development and build
-- *(config)* Add vite configuration
-- *(build)* Update start script to use node
-- *(tsconfig)* Add path alias for src directory
-- *(vite)* Add vite-tsconfig-paths plugin
-- *(vite)* Update build config for es module and externals
-- *(scripts)* Update start script to use esm module
-- *(eslint)* Update ignores in eslint config
-- *(tsconfig)* Update compiler settings for esnext
-- *(scripts)* Update `start` script to use `index.js`
-- *(vite)* Update build target and output file name
-- *(vite)* Add `@prisma/client` to external dependencies
-- *(gitignore)* Add `prisma/dev.db` to ignored files
-- *(scripts)* Add `prebuild` script to `package.json`
-- *(scripts)* Add `prestart` script to run build
+- _(gitignore)_ Update ignore list for lock file
+- _(package)_ Add `start` script to `package.json`
+- _(build)_ Add initial `tsconfig.json` for TypeScript setup
+- _(scripts)_ Add `clean` script to remove `dist` folder
+- _(build)_ Switch from pnpm to bun for setup and build
+- _(scripts)_ Add `lint` script using `eslint`
+- _(package)_ Add `type` field to `package.json`
+- _(lint-staged)_ Add `lint-staged` config for code formatting
+- _(linting)_ Add ESLint configuration
+- _(cliff)_ Add git-cliff configuration
+- _(style)_ Add prettier configuration
+- _(husky)_ Add pre-commit hook for linting and testing
+- _(scripts)_ Add vite commands for development and build
+- _(config)_ Add vite configuration
+- _(build)_ Update start script to use node
+- _(tsconfig)_ Add path alias for src directory
+- _(vite)_ Add vite-tsconfig-paths plugin
+- _(vite)_ Update build config for es module and externals
+- _(scripts)_ Update start script to use esm module
+- _(eslint)_ Update ignores in eslint config
+- _(tsconfig)_ Update compiler settings for esnext
+- _(scripts)_ Update `start` script to use `index.js`
+- _(vite)_ Update build target and output file name
+- _(vite)_ Add `@prisma/client` to external dependencies
+- _(gitignore)_ Add `prisma/dev.db` to ignored files
+- _(scripts)_ Add `prebuild` script to `package.json`
+- _(scripts)_ Add `prestart` script to run build
 
 ### ◀️ Revert
 
-- *(build)* Switch from pnpm to bun for setup and build
+- _(build)_ Switch from pnpm to bun for setup and build
 
 ## [1.0.0-alpha.0] - 2024-10-07
 
 ### 🚀 Features
 
-- *(graphql)* Add GraphQL schema for auctions and DAOs
+- _(graphql)_ Add GraphQL schema for auctions and DAOs
 
 ### 📚 Documentation
 
-- *(readme)* Update project title
-- *(readme)* Add project badges and warning section
+- _(readme)_ Update project title
+- _(readme)_ Add project badges and warning section
 
 ### ⚙️ Miscellaneous Tasks
 
-- *(style)* Add `.editorconfig` for consistent code style
+- _(style)_ Add `.editorconfig` for consistent code style
 - Add `.gitignore` for common NodeJS and project files
-- *(npm)* Add `.npmrc` to enforce exact versioning
-- *(templates)* Add GitHub issue templates
-- *(workflows)* Add comprehensive CI/CD workflows
-- *(dependabot)* Add configuration for dependency updates
-- *(ci)* Add FUNDING file for GitHub sponsor links
-- *(stale-bot)* Add configuration for stale issues
+- _(npm)_ Add `.npmrc` to enforce exact versioning
+- _(templates)_ Add GitHub issue templates
+- _(workflows)_ Add comprehensive CI/CD workflows
+- _(dependabot)_ Add configuration for dependency updates
+- _(ci)_ Add FUNDING file for GitHub sponsor links
+- _(stale-bot)_ Add configuration for stale issues
 
 <!-- generated by git-cliff -->

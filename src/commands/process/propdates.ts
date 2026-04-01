@@ -1,65 +1,147 @@
 import { getCache, setCache } from '@/cache'
 import {
-  getFollowerAddresses,
-  getFollowerDAOs,
   getFollowerFids,
+  getFollowersDaoMap,
   getProposalFromId,
   getUserFid,
 } from '@/commands'
 import { logger } from '@/logger'
 import { addToQueue } from '@/queue'
+import { Chain, Proposal } from '@/services/builder/types'
 import { getPropdateAttestations } from '@/services/eas/get-propdate-attestations'
-import { filter, pipe } from 'remeda'
+import { TargetingOptions } from '@/services/testing/targeting'
+import { filter } from 'remeda'
 import { JsonValue } from 'type-fest'
+import { Hex } from 'viem'
+
+/**
+ * Checks whether the follower should be processed based on targeting options.
+ * @param follower - Farcaster follower FID.
+ * @param options - Optional targeting configuration.
+ * @returns True when this follower should be processed.
+ */
+function shouldProcessFollower(
+  follower: number,
+  options: TargetingOptions,
+): boolean {
+  if (!options.targetFids || options.targetFids.length === 0) {
+    return true
+  }
+
+  return options.targetFids.includes(follower)
+}
+
+/**
+ * Builds a stable proposal lookup key.
+ * @param chainId - Chain identifier.
+ * @param proposalId - Proposal id.
+ * @returns Stable key for map lookups.
+ */
+function getProposalKey(chainId: number, proposalId: string): string {
+  return `${chainId.toString()}:${proposalId.toLowerCase()}`
+}
+
+/**
+ * Prefetches proposals needed for propdates processing.
+ * @param proposalRefs - Proposal refs with chain id and proposal id.
+ * @returns Map of proposal key to proposal payload.
+ */
+async function buildProposalLookup(
+  proposalRefs: {
+    chain: Chain
+    proposalId: Hex
+  }[],
+): Promise<Map<string, Proposal | null | undefined>> {
+  const uniqueRefs = new Map<string, (typeof proposalRefs)[number]>()
+
+  for (const proposalRef of proposalRefs) {
+    const proposalKey = getProposalKey(
+      proposalRef.chain.id,
+      proposalRef.proposalId,
+    )
+    if (!uniqueRefs.has(proposalKey)) {
+      uniqueRefs.set(proposalKey, proposalRef)
+    }
+  }
+
+  const proposalLookup = new Map<string, Proposal | null | undefined>()
+  for (const [proposalKey, proposalRef] of uniqueRefs) {
+    const proposal = await getProposalFromId(
+      proposalRef.chain,
+      proposalRef.proposalId,
+    )
+    proposalLookup.set(proposalKey, proposal)
+  }
+
+  return proposalLookup
+}
 
 /**
  * Processes new proposal updates and sends notifications to relevant followers
+ * @param options - Optional targeting configuration.
  * @returns A promise that resolves when all updates have been processed
  * @throws Error if there's an issue fetching or processing updates
  */
-async function handleProposalUpdates() {
+async function handleProposalUpdates(options: TargetingOptions) {
   try {
     logger.info('Fetching new propdates...')
-    const { propdates } = await getPropdateAttestations()
-    logger.info({ propdates }, 'New propdates retrieved.')
-
-    const userFid = await getUserFid()
-    logger.debug({ userFid }, 'User FID retrieved.')
-    const followers = await getFollowerFids(userFid)
-    logger.info({ followerCount: followers.length }, 'Follower FIDs retrieved.')
-    for (const follower of followers) {
-      logger.debug({ follower }, 'Processing follower.')
-      // Retrieve the ethereum addresses associated with the current follower
-      let addresses = await getFollowerAddresses(follower)
-      logger.debug({ follower, addresses }, 'Follower addresses retrieved.')
-
-      addresses = pipe(
-        addresses,
-        filter((address) => /^0x[a-fA-F0-9]{40}$/.test(address)),
-      )
-      logger.debug(
-        { follower, addresses },
-        'Filtered valid Ethereum addresses.',
-      )
-
-      // If no addresses are found, skip to the next follower
-      if (addresses.length === 0) {
-        logger.info(
-          { follower },
-          'No valid addresses found for follower, skipping.',
-        )
-        continue
+    const { propdates: fetchedPropdates } = await getPropdateAttestations()
+    const propdates = filter(fetchedPropdates, (propdate) => {
+      if (options.targetChains && options.targetChains.length > 0) {
+        const chainName = propdate.chain.name.toLowerCase()
+        if (!options.targetChains.includes(chainName)) {
+          return false
+        }
       }
 
-      // Retrieve the DAOs associated with the current follower and their addresses
-      const daos = await getFollowerDAOs(follower, addresses)
+      return true
+    })
+
+    logger.info({ propdates }, 'New propdates retrieved.')
+
+    const proposalLookup = await buildProposalLookup(
+      propdates.map((propdate) => ({
+        chain: propdate.chain,
+        proposalId: propdate.proposalId,
+      })),
+    )
+    logger.info(
+      { proposalLookupCount: proposalLookup.size },
+      'Propdate proposal lookup prepared.',
+    )
+
+    const userFid = getUserFid()
+    logger.debug({ userFid }, 'User FID retrieved.')
+    const followers = await getFollowerFids(userFid)
+    const scopedFollowers = followers.filter((follower) =>
+      shouldProcessFollower(follower, options),
+    )
+    logger.info(
+      {
+        followerCount: followers.length,
+        scopedFollowerCount: scopedFollowers.length,
+      },
+      'Follower FIDs retrieved.',
+    )
+
+    if (scopedFollowers.length === 0) {
+      logger.warn(
+        'No followers matched targeting options, terminating execution.',
+      )
+      return
+    }
+
+    const followerDaosMap = await getFollowersDaoMap(scopedFollowers)
+    for (const follower of scopedFollowers) {
+      logger.debug({ follower }, 'Processing follower.')
+      const daos = followerDaosMap[follower] ?? []
       logger.debug(
         { follower, daos },
         'DAOs associated with follower retrieved.',
       )
 
       // If no DAOs are found, skip to the next follower
-      if (!daos || daos.length <= 0) {
+      if (daos.length <= 0) {
         logger.info({ follower }, 'No DAOs found for follower, skipping.')
         continue
       }
@@ -95,10 +177,11 @@ async function handleProposalUpdates() {
         )
 
         // get proposal data from proposal id
-        const proposal = await getProposalFromId(
-          propdate.chain,
+        const proposalKey = getProposalKey(
+          propdate.chain.id,
           propdate.proposalId,
         )
+        const proposal = proposalLookup.get(proposalKey)
 
         if (!proposal) {
           // skip if proposal doesn't exist or Json parsing error
@@ -112,8 +195,18 @@ async function handleProposalUpdates() {
           continue
         }
 
+        if (
+          options.targetDaoIds &&
+          options.targetDaoIds.length > 0 &&
+          !options.targetDaoIds.includes(proposal.dao.id.toLowerCase())
+        ) {
+          continue
+        }
+
+        const proposalDaoKey = `${proposal.dao.id.toLowerCase()}:${proposal.dao.chain.id.toString()}`
+
         // If the proposal's DAO ID is not in the list of DAOs for the current follower, skip to the next update
-        if (!daos.includes(proposal.dao.id)) {
+        if (!daos.includes(proposalDaoKey)) {
           logger.debug(
             {
               propdateId: propdate.id,
@@ -145,14 +238,18 @@ async function handleProposalUpdates() {
             proposalId: propdate.proposalId,
             follower,
           },
-          'Adding proposal update to notification queue.',
+          options.dryRun
+            ? 'Dry run: proposal update would be added to notification queue.'
+            : 'Adding proposal update to notification queue.',
         )
-        await addToQueue({
-          type: 'notification',
-          recipient: follower,
-          propdate: propdate as unknown as JsonValue,
-          proposal: proposal as unknown as JsonValue,
-        })
+        if (!options.dryRun) {
+          await addToQueue({
+            type: 'notification',
+            recipient: follower,
+            propdate: propdate as unknown as JsonValue,
+            proposal: proposal as unknown as JsonValue,
+          })
+        }
 
         // Mark this update as notified
         notifiedUpdatesSet.add(propdate.id)
@@ -171,7 +268,9 @@ async function handleProposalUpdates() {
         { cacheKey, notifiedProposals: Array.from(notifiedUpdatesSet) },
         'Updating cache with notified proposals.',
       )
-      await setCache(cacheKey, Array.from(notifiedUpdatesSet))
+      if (!options.dryRun) {
+        await setCache(cacheKey, Array.from(notifiedUpdatesSet))
+      }
     }
   } catch (error) {
     if (error instanceof Error) {
@@ -190,7 +289,8 @@ async function handleProposalUpdates() {
  * Handles notifications for new proposal updates
  *
  * This function triggers notifications for proposal updates that are currently active.
+ * @param options - Optional targeting configuration.
  */
-export async function processUpdates() {
-  await handleProposalUpdates()
+export async function processUpdates(options: TargetingOptions = {}) {
+  await handleProposalUpdates(options)
 }

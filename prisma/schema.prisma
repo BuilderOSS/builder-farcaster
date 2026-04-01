@@ -1,6 +1,7 @@
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 generator client {
@@ -19,5 +20,23 @@ model Queue {
   timestamp   DateTime
   status      String
   retries     Int       @default(0)
+  maxRetries  Int       @default(3)
+  availableAt DateTime  @default(now())
+  lockedAt    DateTime?
+  lockedBy    String?
   completedAt DateTime?
+  lastError   String?
+  updatedAt   DateTime  @updatedAt
+
+  @@index([status, availableAt, timestamp])
+}
+
+model JobLock {
+  name        String   @id
+  lockedUntil DateTime
+  owner       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([lockedUntil])
 }

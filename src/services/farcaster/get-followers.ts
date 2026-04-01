@@ -1,0 +1,70 @@
+import { logger } from '@/logger'
+import {
+  fetchRequest,
+  HttpRequestMethod,
+  runFarcasterRequestWithRetry,
+} from '@/services/farcaster/index'
+import { Env, User } from '@/services/farcaster/types'
+
+const MAX_PAGES = 100
+
+interface Result {
+  users: User[]
+}
+
+interface Response {
+  result: {
+    users: User[]
+  }
+  next?: {
+    cursor: string
+  }
+}
+
+/**
+ * Retrieves all followers of a user.
+ * @param env - The environment variables containing access token and base URL.
+ * @param fid - The ID of the user for whom to retrieve followers.
+ * @returns - A promise that resolves to an object containing all retrieved users.
+ */
+export const getFollowers = async (env: Env, fid: number): Promise<Result> => {
+  const { FARCASTER_API_BASE_URL: baseUrl, FARCASTER_API_KEY: apiKey } = env
+  let newCursor = ''
+  const users: User[] = []
+  let response: Response
+  let page = 0
+
+  do {
+    if (page >= MAX_PAGES) {
+      logger.warn(
+        { cursor: newCursor || 'start', fid, maxPages: MAX_PAGES },
+        'Reached followers pagination limit, stopping early.',
+      )
+      break
+    }
+
+    const params = {
+      fid: fid.toString(),
+      cursor: newCursor,
+      limit: '50',
+    }
+    response = await runFarcasterRequestWithRetry(
+      async () =>
+        fetchRequest<Response>(
+          baseUrl,
+          apiKey,
+          HttpRequestMethod.GET,
+          '/v2/followers',
+          {
+            params,
+          },
+        ),
+      `get-followers fid=${fid.toString()} cursor=${newCursor || 'start'}`,
+    )
+    users.push(...response.result.users)
+    newCursor = response.next ? response.next.cursor : ''
+    page += 1
+  } while (response.next)
+
+  return { users }
+}

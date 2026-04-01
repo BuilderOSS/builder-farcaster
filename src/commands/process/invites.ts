@@ -1,11 +1,13 @@
 import { getCache, setCache } from '@/cache'
-import { env } from '@/config'
 import { CACHE_MAX_AGE_MS, getFollowerFids, getUserFid } from '@/commands'
+import { env } from '@/config'
 import { logger } from '@/logger'
 import { addToQueue } from '@/queue'
 import { getDAOsTokenOwners } from '@/services/builder/get-daos-token-owners'
 import type { Dao, Owner } from '@/services/builder/types'
-import { getUserByVerification } from '@/services/warpcast/get-user-by-verification'
+import { getUserByVerification } from '@/services/farcaster/get-user-by-verification'
+import type { EnvWithAppKeys } from '@/services/farcaster/types'
+import { TargetingOptions } from '@/services/testing/targeting'
 import {
   concat,
   entries,
@@ -21,12 +23,85 @@ import {
 import { JsonValue } from 'type-fest'
 
 /**
+ * Type guard for env objects that include required app-key auth fields.
+ * @param value - Runtime env object.
+ * @returns True when app-key fields are present.
+ */
+function hasAppKeyEnv(value: typeof env): value is EnvWithAppKeys {
+  return Boolean(
+    value.FARCASTER_APP_FID &&
+      value.FARCASTER_APP_KEY &&
+      value.FARCASTER_APP_KEY_PUBLIC,
+  )
+}
+
+/**
+ * Returns whether invite processing is enabled.
+ * @returns False until app-key auth for invite lookups is validated.
+ */
+function isInvitesFlowEnabled(): boolean {
+  return false
+}
+
+/**
+ * Returns whether a target FID should receive invite processing.
+ * @param fid - Candidate Farcaster ID.
+ * @param options - Optional targeting configuration.
+ * @returns True when invite should be processed for this FID.
+ */
+function shouldProcessInviteFid(
+  fid: number,
+  options: TargetingOptions,
+): boolean {
+  if (!options.targetFids || options.targetFids.length === 0) {
+    return true
+  }
+
+  return options.targetFids.includes(fid)
+}
+
+/**
+ * Filters DAOs according to optional DAO and chain targeting.
+ * @param daos - Candidate DAO list for a FID.
+ * @param options - Optional targeting configuration.
+ * @returns DAOs matching active filters.
+ */
+function filterTargetDaos(daos: Dao[], options: TargetingOptions): Dao[] {
+  return daos.filter((dao) => {
+    if (options.targetDaoIds && options.targetDaoIds.length > 0) {
+      if (!options.targetDaoIds.includes(dao.id.toLowerCase())) {
+        return false
+      }
+    }
+
+    if (options.targetChains && options.targetChains.length > 0) {
+      if (!options.targetChains.includes(dao.chain.name.toLowerCase())) {
+        return false
+      }
+    }
+
+    return true
+  })
+}
+
+/**
  * Handles invitations by fetching DAO owners, mapping them to their respective
  * FIDs, and creating an owner-to-DAO mapping.
+ * @param options - Optional targeting configuration.
  */
-export async function processInvitesCommand() {
+export async function processInvitesCommand(options: TargetingOptions = {}) {
+  if (!isInvitesFlowEnabled()) {
+    // TODO(invites): Re-enable when app-key authenticated owner->fid lookup is
+    // validated end-to-end. Keep this disabled to avoid partial invite execution.
+    logger.warn(
+      { options },
+      'Invites flow is intentionally disabled pending app-key auth validation.',
+    )
+    return
+  }
+
   try {
-    const sortedFidToDaoMap = await getSortedFidToDaoMap()
+    const sortedFidToDaoMap = await getSortedFidToDaoMap(options)
     logger.debug(
       {
         sortedFidToDaoMap,
@@ -36,7 +111,7 @@ export async function processInvitesCommand() {
     )
 
     // Retrieve all followers once (assuming there's a shared user fid cacheable by getUserFid)
-    const followers = await getFollowerFids(await getUserFid())
+    const followers = await getFollowerFids(getUserFid())
     logger.debug(
       { followersCount: followers.length },
       'Followers retrieved successfully',
@@ -49,18 +124,37 @@ export async function processInvitesCommand() {
     )
 
     for (const [fid, daos] of fidDaoEntries) {
-      if (followers.includes(Number(fid))) {
+      const numericFid = Number(fid)
+
+      if (!shouldProcessInviteFid(numericFid, options)) {
         continue
       }
 
-      const sortedDaos = sort(daos, (a, b) => b.ownerCount - a.ownerCount)
+      if (followers.includes(numericFid)) {
+        continue
+      }
 
-      await addToQueue({
-        type: 'invitation',
-        recipient: fid,
-        daos: sortedDaos as unknown as JsonValue,
-      })
-      logger.info({ fid, daos }, 'Invitation added to queue for member')
+      const targetDaos = filterTargetDaos(daos, options)
+      if (targetDaos.length === 0) {
+        continue
+      }
+
+      const sortedDaos = sort(targetDaos, (a, b) => b.ownerCount - a.ownerCount)
+
+      logger.info(
+        { fid, daos: sortedDaos, dryRun: options.dryRun === true },
+        options.dryRun
+          ? 'Dry run: invitation would be added to queue for member'
+          : 'Invitation added to queue for member',
+      )
+
+      if (!options.dryRun) {
+        await addToQueue({
+          type: 'invitation',
+          recipient: numericFid,
+          daos: sortedDaos as unknown as JsonValue,
+        })
+      }
     }
   } catch (error) {
     logger.error(
@@ -78,9 +172,10 @@ export async function processInvitesCommand() {
  * Retrieves a sorted map of FIDs (Federated Identifiers) to DAOs (Decentralized Autonomous Organizations).
  * This method fetches DAOs token owners, groups them by owner address, maps FIDs to DAOs,
  * and finally sorts the map by the number of DAOs associated with each FID.
+ * @param options - Optional targeting configuration.
  * @returns A promise that resolves to an object where the keys are FIDs and the values are arrays of DAOs, sorted by the number of DAOs.
  */
-async function getSortedFidToDaoMap() {
+async function getSortedFidToDaoMap(options: TargetingOptions) {
   const cacheKey = 'sorted_fid_to_dao_map'
   let sortedFidToDaoMap = await getCache<Record<number, Dao[]> | null>(
     cacheKey,
@@ -104,8 +199,10 @@ async function getSortedFidToDaoMap() {
     logger.info('Sorting fidToDaoMap by the number of DAOs')
     sortedFidToDaoMap = sortFidToDaoMap(fidToDaoMap)
 
-    await setCache(cacheKey, sortedFidToDaoMap)
-    logger.info('Sorted FID to DAO map fetched and cached successfully')
+    if (!options.dryRun) {
+      await setCache(cacheKey, sortedFidToDaoMap)
+      logger.info('Sorted FID to DAO map fetched and cached successfully')
+    }
   }
 
   return sortedFidToDaoMap
@@ -170,6 +267,13 @@ async function mapFIDsToDAOs(ownerToDaosMap: Record<string, Dao[]>) {
  */
 async function fetchFIDForOwner(owner: string) {
   logger.debug({ owner }, 'Fetching FID for owner')
+
+  if (!hasAppKeyEnv(env)) {
+    throw new Error(
+      'Missing FARCASTER_APP_FID/FARCASTER_APP_KEY/FARCASTER_APP_KEY_PUBLIC for invite owner lookup',
+    )
+  }
+
   const {
     user: { fid },
   } = await getUserByVerification(env, owner)

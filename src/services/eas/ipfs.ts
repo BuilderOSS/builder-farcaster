@@ -1,4 +1,5 @@
 import { CID } from 'multiformats/cid'
+import { lookup } from 'node:dns/promises'
 
 /**
  * Checks if a string is a valid IPFS CID
@@ -28,6 +29,161 @@ const IPFS_ENDPOINTS = [
 ]
 
 const REQUEST_TIMEOUT = 10000 // 10 seconds
+const MAX_REDIRECTS = 5
+
+/**
+ * Removes surrounding IPv6 brackets from host literals.
+ * @param hostname - URL hostname.
+ * @returns Hostname without brackets.
+ */
+function stripIPv6Brackets(hostname: string): string {
+  if (hostname.startsWith('[') && hostname.endsWith(']')) {
+    return hostname.slice(1, -1)
+  }
+
+  return hostname
+}
+
+/**
+ * Checks whether an HTTP status code is a redirect.
+ * @param status - HTTP status code.
+ * @returns True when status is a redirect code.
+ */
+function isRedirectStatus(status: number): boolean {
+  return [301, 302, 303, 307, 308].includes(status)
+}
+
+/**
+ * Checks whether an IPv4 address is in a private/local range.
+ * @param address - IPv4 address.
+ * @returns True when private/local.
+ */
+function isPrivateIPv4(address: string): boolean {
+  const parts = address.split('.').map((part) => Number.parseInt(part, 10))
+  if (parts.length !== 4 || parts.some((part) => Number.isNaN(part))) {
+    return false
+  }
+
+  const [first, second] = parts
+
+  return (
+    first === 10 ||
+    first === 127 ||
+    (first === 169 && second === 254) ||
+    (first === 172 && second >= 16 && second <= 31) ||
+    (first === 192 && second === 168)
+  )
+}
+
+/**
+ * Checks whether a value is a syntactically valid IPv4 address.
+ * @param address - Candidate address.
+ * @returns True when valid IPv4.
+ */
+function isIPv4Address(address: string): boolean {
+  const parts = address.split('.')
+  if (parts.length !== 4) {
+    return false
+  }
+
+  return parts.every((part) => {
+    const parsed = Number.parseInt(part, 10)
+    return !Number.isNaN(parsed) && parsed >= 0 && parsed <= 255
+  })
+}
+
+/**
+ * Checks whether a value looks like an IPv6 address.
+ * @param address - Candidate address.
+ * @returns True when value appears to be IPv6.
+ */
+function isIPv6Address(address: string): boolean {
+  return address.includes(':') && /^[0-9a-f:]+$/i.test(address)
+}
+
+/**
+ * Checks whether an IPv6 address is in a private/local range.
+ * @param address - IPv6 address.
+ * @returns True when private/local.
+ */
+function isPrivateIPv6(address: string): boolean {
+  const normalized = address.toLowerCase()
+
+  if (normalized === '::1') {
+    return true
+  }
+
+  if (normalized.startsWith('fc') || normalized.startsWith('fd')) {
+    return true
+  }
+
+  if (
+    normalized.startsWith('fe8') ||
+    normalized.startsWith('fe9') ||
+    normalized.startsWith('fea') ||
+    normalized.startsWith('feb')
+  ) {
+    return true
+  }
+
+  if (normalized.includes('::ffff:')) {
+    const mapped = normalized.split('::ffff:')[1]
+    if (mapped && isPrivateIPv4(mapped)) {
+      return true
+    }
+  }
+
+  return false
+}
+
+/**
+ * Checks whether an IP address is in a blocked private/local range.
+ * @param address - IP address.
+ * @returns True when private/local.
+ */
+function isPrivateIPAddress(address: string): boolean {
+  if (isIPv4Address(address)) {
+    return isPrivateIPv4(address)
+  }
+
+  if (isIPv6Address(address)) {
+    return isPrivateIPv6(address)
+  }
+
+  return false
+}
+
+/**
+ * Ensures an HTTP URL does not resolve to private-network targets.
+ * @param rawUrl - Candidate HTTP(S) URL.
+ */
+async function assertPublicHttpTarget(rawUrl: string): Promise<void> {
+  const parsed = new URL(rawUrl)
+  const hostname = stripIPv6Brackets(parsed.hostname.toLowerCase())
+
+  if (hostname === 'localhost') {
+    throw new Error(`Blocked private-network URL host: ${hostname}`)
+  }
+
+  if (isPrivateIPAddress(hostname)) {
+    throw new Error(`Blocked private-network IP: ${hostname}`)
+  }
+
+  if (!isIPv4Address(hostname) && !isIPv6Address(hostname)) {
+    const records = await lookup(hostname, {
+      all: true,
+      verbatim: true,
+    })
+
+    for (const record of records) {
+      if (isPrivateIPAddress(record.address)) {
+        throw new Error(
+          `Blocked private-network DNS target for ${hostname}: ${record.address}`,
+        )
+      }
+    }
+  }
+}
 
 /**
  * Fetches content from IPFS using multiple gateways
@@ -65,22 +221,52 @@ const fetchFromIPFS = async (cid: string | undefined): Promise<string> => {
 
 const fetchWithTimeout = async (url: string) => {
   try {
-    const controller = new AbortController()
-    const { signal } = controller
+    let currentUrl = url
 
-    // Set a 10s timeout for the request
-    const timeoutId = setTimeout(function () {
-      controller.abort()
-    }, REQUEST_TIMEOUT)
+    for (
+      let redirectCount = 0;
+      redirectCount <= MAX_REDIRECTS;
+      redirectCount++
+    ) {
+      await assertPublicHttpTarget(currentUrl)
 
-    const res = await fetch(url, { signal })
-    clearTimeout(timeoutId)
+      const controller = new AbortController()
+      const { signal } = controller
 
-    if (!res.ok) {
-      throw new Error(`HTTP error! Status: ${res.status.toString()}`)
+      // Set a 10s timeout for the request
+      const timeoutId = setTimeout(function () {
+        controller.abort()
+      }, REQUEST_TIMEOUT)
+
+      let res: Response
+
+      try {
+        res = await fetch(currentUrl, { redirect: 'manual', signal })
+      } finally {
+        clearTimeout(timeoutId)
+      }
+
+      if (isRedirectStatus(res.status)) {
+        const location = res.headers.get('location')
+
+        if (!location) {
+          throw new Error(
+            `Redirect response missing location header: ${res.status.toString()}`,
+          )
+        }
+
+        currentUrl = new URL(location, currentUrl).toString()
+        continue
+      }
+
+      if (!res.ok) {
+        throw new Error(`HTTP error! Status: ${res.status.toString()}`)
+      }
+
+      return await res.text()
     }
 
-    return await res.text()
+    throw new Error(`Too many redirects while fetching URL: ${url}`)
   } catch (error) {
     console.error(`Failed to fetch from URL: ${url}`, error)
     throw new Error(`Failed to fetch from URL: ${url}`)
