@@ -140,7 +140,9 @@ async function notifyFollowersForProposals(
     const notifiedProposalsSet = new Set(notifiedProposals)
 
     for (const proposal of proposals) {
-      if (!daos.includes(proposal.dao.id.toLowerCase())) {
+      const proposalDaoKey = `${proposal.dao.id.toLowerCase()}:${proposal.dao.chain.id.toString()}`
+
+      if (!daos.includes(proposalDaoKey)) {
         continue
       }
 
@@ -255,8 +257,10 @@ export async function processProposalsCommand(options: TargetingOptions = {}) {
         { message: error.message, stack: error.stack },
         'Error executing async function',
       )
+      throw error
     } else {
       logger.error({ error }, 'Unknown error occurred')
+      throw new Error(String(error))
     }
   }
 }

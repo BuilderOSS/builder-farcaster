@@ -38,8 +38,8 @@ export default function handler(req: ApiRequest, res: ApiResponse) {
   // 1) Verify app-key bearer token format against authenticated Farcaster endpoints.
   // 2) Add integration test coverage for invite owner->fid resolution.
   // 3) Run dry-run + no-send + real-send invite validation and confirm retries.
-  res.status(200).json({
-    ok: true,
+  res.status(503).json({
+    ok: false,
     job: 'process-invites',
     skipped: true,
     reason:

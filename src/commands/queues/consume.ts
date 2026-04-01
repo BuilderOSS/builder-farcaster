@@ -3,7 +3,7 @@ import { parseBooleanEnv } from '@/flags'
 import { logger } from '@/logger'
 import { claimPendingTasks, completeTask, retryTask } from '@/queue'
 import { Dao, Propdate, Proposal } from '@/services/builder/types'
-import { sendDirectCast } from '@/services/warpcast/send-direct-cast'
+import { sendDirectCast } from '@/services/farcaster/send-direct-cast'
 import { isPast, toRelativeTime } from '@/utils'
 import sha256 from 'crypto-js/sha256'
 import { uniqueBy } from 'remeda'
@@ -13,7 +13,7 @@ import { v4 as uuidv4 } from 'uuid'
 const noSendNotifications = parseBooleanEnv(env.NO_SEND_NOTIFICATIONS, false)
 
 type TaskData = {
-  type: 'notification' | 'test' | 'invitation'
+  type: 'notification' | 'invitation'
 } & (NotificationData | InvitationData)
 
 interface NotificationData {
@@ -102,11 +102,13 @@ function formatPropdateMessage(propdate: Propdate, proposal: Proposal): string {
 /**
  * Handles notification tasks.
  * @param taskId - The unique identifier for the task.
+ * @param workerId - Current worker lock owner id.
  * @param data - The data associated with the notification task.
  * @returns Resolves when the notification has been successfully handled.
  */
 async function handleNotification(
   taskId: string,
+  workerId: string,
   data: NotificationData,
 ): Promise<boolean> {
   try {
@@ -125,8 +127,7 @@ async function handleNotification(
       logger.info(
         {
           idempotencyKey,
-          message,
-          recipient,
+          recipientHash: sha256(recipient.toString()).toString(),
         },
         'NO_SEND_NOTIFICATIONS enabled. Skipping direct cast send.',
       )
@@ -153,7 +154,13 @@ async function handleNotification(
       logger.error({ error }, 'Unknown error occurred')
     }
 
-    await retryTask(taskId, reason)
+    const retried = await retryTask(taskId, workerId, reason)
+    if (!retried) {
+      logger.warn(
+        { taskId, workerId },
+        'Skipped retry because task lock ownership changed.',
+      )
+    }
     return false
   }
 }
@@ -161,11 +168,13 @@ async function handleNotification(
 /**
  * Handles invitation tasks.
  * @param taskId - The unique identifier for the task.
+ * @param workerId - Current worker lock owner id.
  * @param data - The data associated with the invitation task.
  * @returns Resolves when the invitation has been successfully handled.
  */
 async function handleInvitation(
   taskId: string,
+  workerId: string,
   data: InvitationData,
 ): Promise<boolean> {
   try {
@@ -180,10 +189,10 @@ async function handleInvitation(
     const message =
       uniqueDaos.length === 1
         ? `👋 Hey there! You're a proud member of ${daoNames}, powered by Builder Protocol. 🎉 ` +
-          `Want to stay in the loop for the latest proposals? Follow @builderbot on Warpcast ` +
+          `Want to stay in the loop for the latest proposals? Follow @builderbot on Farcaster ` +
           `to never miss an update! 🚀`
         : `👋 Hey there! You're a member of ${daoCount} DAOs built by Builder Protocol: ${daoNames}. 🚀 ` +
-          `Stay informed about new proposals in your DAOs by following @builderbot on Warpcast ` +
+          `Stay informed about new proposals in your DAOs by following @builderbot on Farcaster ` +
           `and make your voice count! 🎉`
 
     const idempotencyKey = sha256(message).toString()
@@ -191,10 +200,9 @@ async function handleInvitation(
     if (noSendNotifications) {
       logger.info(
         {
-          daos: uniqueDaos.map((dao) => dao.name),
+          daoCount: uniqueDaos.length,
           idempotencyKey,
-          message,
-          recipient,
+          recipientHash: sha256(recipient.toString()).toString(),
         },
         'NO_SEND_NOTIFICATIONS enabled. Skipping invitation direct cast send.',
       )
@@ -221,7 +229,13 @@ async function handleInvitation(
       logger.error({ error }, 'Unknown error occurred')
     }
 
-    await retryTask(taskId, reason)
+    const retried = await retryTask(taskId, workerId, reason)
+    if (!retried) {
+      logger.warn(
+        { taskId, workerId },
+        'Skipped retry because task lock ownership changed.',
+      )
+    }
     return false
   }
 }
@@ -255,24 +269,45 @@ export const queueConsumeCommand = async (limit?: number) => {
         case 'notification':
           handledSuccessfully = await handleNotification(
             task.taskId,
+            workerId,
             taskData as NotificationData,
           )
           break
         case 'invitation':
           handledSuccessfully = await handleInvitation(
             task.taskId,
+            workerId,
             taskData as InvitationData,
           )
           break
-        default:
+        default: {
           logger.error({ task }, 'Unknown task type')
-          await retryTask(task.taskId, `Unknown task type: ${taskData.type}`)
+          const retried = await retryTask(
+            task.taskId,
+            workerId,
+            `Unknown task type: ${String(taskData.type)}`,
+          )
+
+          if (!retried) {
+            logger.warn(
+              { taskId: task.taskId, workerId },
+              'Skipped retry because task lock ownership changed.',
+            )
+          }
           break
+        }
       }
 
       if (handledSuccessfully) {
-        await completeTask(task.taskId)
-        logger.info({ taskId: task.taskId }, 'Task marked as completed')
+        const completed = await completeTask(task.taskId, workerId)
+        if (completed) {
+          logger.info({ taskId: task.taskId }, 'Task marked as completed')
+        } else {
+          logger.warn(
+            { taskId: task.taskId, workerId },
+            'Skipped completion because task lock ownership changed.',
+          )
+        }
       }
     }
   } catch (error) {

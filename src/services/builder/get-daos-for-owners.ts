@@ -18,6 +18,15 @@ const OWNER_CHUNK_SIZE = 75
 const SUBGRAPH_PAGE_SIZE = 1000
 
 /**
+ * Builds a chain-qualified DAO key.
+ * @param dao - DAO object.
+ * @returns Stable key per chain.
+ */
+function getDaoChainKey(dao: Dao): string {
+  return `${dao.id.toLowerCase()}:${dao.chain.id.toString()}`
+}
+
+/**
  * Splits addresses into fixed-size chunks.
  * @param addresses - Owner addresses.
  * @param size - Maximum chunk size.
@@ -118,15 +127,16 @@ export const getDAOsForOwners = async (
 
     const uniqueDaos = pipe(
       allOwners.map((owner) => owner.dao),
-      uniqueBy((dao) => dao.id),
+      uniqueBy((dao) => getDaoChainKey(dao)),
     )
 
     const ownerDaoIdsMap: Record<string, string[]> = {}
     for (const owner of allOwners) {
       const ownerAddress = owner.owner.toLowerCase()
+      const daoKey = getDaoChainKey(owner.dao)
       ownerDaoIdsMap[ownerAddress] ??= []
-      if (!ownerDaoIdsMap[ownerAddress].includes(owner.dao.id.toLowerCase())) {
-        ownerDaoIdsMap[ownerAddress].push(owner.dao.id.toLowerCase())
+      if (!ownerDaoIdsMap[ownerAddress].includes(daoKey)) {
+        ownerDaoIdsMap[ownerAddress].push(daoKey)
       }
     }
 

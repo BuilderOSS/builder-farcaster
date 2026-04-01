@@ -1,6 +1,6 @@
 import { signAsync } from '@noble/ed25519'
 
-import { Env } from '@/services/warpcast/types'
+import { Env, EnvWithAppKeys } from '@/services/farcaster/types'
 
 const AUTH_TOKEN_TTL_SECONDS = 300
 
@@ -43,23 +43,23 @@ function decodePrivateKey(value: string): Uint8Array {
 
 /**
  * Returns a short-lived bearer token for authenticated Farcaster client API routes.
- * @param env - Warpcast/Farcaster environment configuration.
+ * @param env - Farcaster environment configuration.
  * @returns Signed app-key token.
  */
-export async function getWarpcastAuthToken(env: Env): Promise<string> {
+export async function getFarcasterAuthToken(env: Env): Promise<string> {
   const now = Date.now()
 
   if (cachedToken && cachedToken.expiresAtMs > now + 10_000) {
     return cachedToken.token
   }
 
-  const { FARCASTER_APP_FID, FARCASTER_APP_KEY, FARCASTER_APP_KEY_PUBLIC } = env
-
-  if (!FARCASTER_APP_FID || !FARCASTER_APP_KEY || !FARCASTER_APP_KEY_PUBLIC) {
+  if (!isEnvWithAppKeys(env)) {
     throw new Error(
       'Missing FARCASTER_APP_FID/FARCASTER_APP_KEY/FARCASTER_APP_KEY_PUBLIC for authenticated Farcaster API routes',
     )
   }
+
+  const { FARCASTER_APP_FID, FARCASTER_APP_KEY, FARCASTER_APP_KEY_PUBLIC } = env
 
   const fid = Number.parseInt(FARCASTER_APP_FID, 10)
   if (!Number.isFinite(fid) || fid <= 0) {
@@ -93,4 +93,17 @@ export async function getWarpcastAuthToken(env: Env): Promise<string> {
   }
 
   return token
+}
+
+/**
+ * Narrows env to required app-key auth fields.
+ * @param env - Runtime Farcaster env.
+ * @returns True when app-key fields are present.
+ */
+function isEnvWithAppKeys(env: Env): env is EnvWithAppKeys {
+  return Boolean(
+    env.FARCASTER_APP_FID &&
+      env.FARCASTER_APP_KEY &&
+      env.FARCASTER_APP_KEY_PUBLIC,
+  )
 }

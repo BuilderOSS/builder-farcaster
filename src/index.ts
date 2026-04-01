@@ -1,7 +1,7 @@
+import { farcasterToken } from '@/commands/farcaster/token'
 import { processInvitesCommand } from '@/commands/process/invites'
 import { processProposalsCommand } from '@/commands/process/proposals'
 import { queueConsumeCommand } from '@/commands/queues/consume'
-import { warpcastToken } from '@/commands/warpcast/token'
 import { getTargetingOptionsFromEnv } from '@/services/testing/targeting'
 import { Command } from 'commander'
 import packageJson from '../package.json'
@@ -63,16 +63,28 @@ queueCommand
     await queueConsumeCommand(limit)
   })
 
-// Register the 'warpcast' command
-const warpcastCommand = program
-  .command('warpcast')
-  .description('Warpcast related commands')
+// Register the 'farcaster' command
+const farcasterCommand = program
+  .command('farcaster')
+  .description('Farcaster related commands')
 
-// Register the 'token' sub-command under 'warpcast'
-warpcastCommand
+// Register the 'token' sub-command under 'farcaster'
+farcasterCommand
   .command('token')
   .description('Token related operations')
-  .action(warpcastToken)
+  .action(farcasterToken)
 
 // Parse the command-line arguments to execute appropriate commands
-program.parse(process.argv)
+/**
+ * Parses and executes CLI commands.
+ */
+async function main(): Promise<void> {
+  try {
+    await program.parseAsync(process.argv)
+  } catch (error) {
+    console.error('CLI command failed:', error)
+    process.exit(1)
+  }
+}
+
+void main()

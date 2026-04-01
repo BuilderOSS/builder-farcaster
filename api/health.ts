@@ -1,8 +1,37 @@
 import { prisma } from '@/db'
 
-const PENDING_WARNING_THRESHOLD = 500
-const PENDING_AGE_WARNING_MINUTES = 30
-const PROCESSING_STALE_WARNING_MINUTES = 20
+/**
+ * Parses a non-negative integer environment variable with fallback.
+ * @param name - Environment variable name.
+ * @param fallback - Default value when unset/invalid.
+ * @returns Parsed non-negative integer.
+ */
+function parseNonNegativeIntEnv(name: string, fallback: number): number {
+  const raw = process.env[name]
+  if (!raw) {
+    return fallback
+  }
+
+  const parsed = Number.parseInt(raw, 10)
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    return fallback
+  }
+
+  return parsed
+}
+
+const PENDING_WARNING_THRESHOLD = parseNonNegativeIntEnv(
+  'PENDING_WARNING_THRESHOLD',
+  500,
+)
+const PENDING_AGE_WARNING_MINUTES = parseNonNegativeIntEnv(
+  'PENDING_AGE_WARNING_MINUTES',
+  30,
+)
+const PROCESSING_STALE_WARNING_MINUTES = parseNonNegativeIntEnv(
+  'PROCESSING_STALE_WARNING_MINUTES',
+  20,
+)
 
 export const config = {
   runtime: 'nodejs',

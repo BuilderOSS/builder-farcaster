@@ -15,32 +15,24 @@ interface TargetingQuery {
 }
 
 /**
- * Normalizes a query value to a single string.
- * @param value - Query value as string or array.
- * @returns Single query value.
- */
-function toSingleValue(value: QueryValue): string | undefined {
-  if (value === undefined) {
-    return undefined
-  }
-
-  return Array.isArray(value) ? value[0] : value
-}
-
-/**
- * Parses a comma-separated string into an array.
- * @param value - CSV-like string.
+ * Parses string or string[] values into a normalized list.
+ * Supports repeated query params and comma-separated values.
+ * @param value - CSV-like string or string[] values.
  * @returns Array of non-empty values.
  */
-function parseCsv(value: string | undefined): string[] {
+function parseCsv(value: QueryValue): string[] {
   if (!value) {
     return []
   }
 
-  return value
-    .split(',')
-    .map((item) => item.trim())
-    .filter((item) => item.length > 0)
+  const values = Array.isArray(value) ? value : [value]
+
+  return values.flatMap((entry) =>
+    entry
+      .split(',')
+      .map((item) => item.trim())
+      .filter((item) => item.length > 0),
+  )
 }
 
 /**
@@ -48,9 +40,10 @@ function parseCsv(value: string | undefined): string[] {
  * @param raw - Raw FID CSV.
  * @returns Valid positive integer FIDs.
  */
-function parseFids(raw: string | undefined): number[] {
+function parseFids(raw: QueryValue): number[] {
   return parseCsv(raw)
-    .map((value) => Number.parseInt(value, 10))
+    .filter((value) => /^\d+$/.test(value))
+    .map((value) => Number(value))
     .filter((value) => Number.isFinite(value) && value > 0)
 }
 
@@ -59,19 +52,19 @@ function parseFids(raw: string | undefined): number[] {
  * @param raw - Raw boolean-like value.
  * @returns Parsed boolean or undefined.
  */
-function parseBoolean(raw: string | undefined): boolean | undefined {
-  if (!raw) {
-    return undefined
-  }
+function parseBoolean(raw: QueryValue): boolean | undefined {
+  const values = parseCsv(raw)
 
-  const normalized = raw.trim().toLowerCase()
+  for (const value of values) {
+    const normalized = value.trim().toLowerCase()
 
-  if (['true', '1', 'yes'].includes(normalized)) {
-    return true
-  }
+    if (['true', '1', 'yes'].includes(normalized)) {
+      return true
+    }
 
-  if (['false', '0', 'no'].includes(normalized)) {
-    return false
+    if (['false', '0', 'no'].includes(normalized)) {
+      return false
+    }
   }
 
   return undefined
@@ -123,10 +116,10 @@ export function getTargetingOptionsFromEnv(): TargetingOptions {
 export function getTargetingOptionsFromQuery(
   query: TargetingQuery,
 ): TargetingOptions {
-  const targetFids = parseFids(toSingleValue(query.fid))
-  const targetDaoIds = normalizeDaoIds(parseCsv(toSingleValue(query.daoId)))
-  const targetChains = normalizeChains(parseCsv(toSingleValue(query.chain)))
-  const dryRun = parseBoolean(toSingleValue(query.dryRun))
+  const targetFids = parseFids(query.fid)
+  const targetDaoIds = normalizeDaoIds(parseCsv(query.daoId))
+  const targetChains = normalizeChains(parseCsv(query.chain))
+  const dryRun = parseBoolean(query.dryRun)
 
   return {
     ...(targetFids.length > 0 && { targetFids }),

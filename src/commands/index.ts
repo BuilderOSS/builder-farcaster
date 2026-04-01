@@ -4,11 +4,21 @@ import { logger } from '@/logger'
 import { getDAOsForOwners } from '@/services/builder/get-daos-for-owners'
 import { getProposalData } from '@/services/builder/get-proposal-from-id'
 import { Chain, Proposal } from '@/services/builder/types'
-import { getFollowers } from '@/services/warpcast/get-followers'
-import { getVerifications } from '@/services/warpcast/get-verifications'
+import { getFollowers } from '@/services/farcaster/get-followers'
+import { getVerifications } from '@/services/farcaster/get-verifications'
 import { Hex } from 'viem'
 
 export const CACHE_MAX_AGE_MS = 86400 * 1000 // 1 day in milliseconds
+
+/**
+ * Builds a chain-qualified DAO key.
+ * @param daoId - DAO contract address.
+ * @param chainId - Chain id.
+ * @returns Stable DAO key for cross-chain matching.
+ */
+function getDaoKey(daoId: string, chainId: number): string {
+  return `${daoId.toLowerCase()}:${chainId.toString()}`
+}
 
 /**
  * Retrieves the follower FIDs (unique follower IDs) for a given FID (unique ID).
@@ -80,7 +90,7 @@ export async function getFollowerDAOs(follower: number, addresses: string[]) {
   } else {
     if (addresses.length > 0) {
       const { daos } = await getDAOsForOwners(env, addresses)
-      daoIds = daos.map((dao) => dao.id.toLowerCase()) // Extract DAO IDs only
+      daoIds = daos.map((dao) => getDaoKey(dao.id, dao.chain.id))
       await setCache(cacheKey, daoIds)
       logger.info(
         { follower, daoIds },
@@ -156,7 +166,7 @@ export async function getFollowersDaoMap(
     for (const address of addresses) {
       const ownerDaoIds = ownerDaoIdsMap[address.toLowerCase()] ?? []
       for (const daoId of ownerDaoIds) {
-        daoIdsSet.add(daoId.toLowerCase())
+        daoIdsSet.add(daoId)
       }
     }
 
@@ -199,7 +209,7 @@ export function getUserFid() {
  * @returns A promise that resolves to the DAO object
  */
 export async function getProposalFromId(chain: Chain, proposalId: Hex) {
-  const cacheKey = `propdate_${proposalId.toLowerCase()}`
+  const cacheKey = `propdate_${chain.id.toString()}_${proposalId.toLowerCase()}`
   let proposal = await getCache<Proposal | null>(cacheKey, CACHE_MAX_AGE_MS)
 
   if (proposal) {

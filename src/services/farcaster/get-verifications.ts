@@ -1,6 +1,9 @@
-import { fetchRequest, HttpRequestMethod } from '@/services/warpcast/index'
-import { Env, Verification } from '@/services/warpcast/types'
+import { logger } from '@/logger'
+import { fetchRequest, HttpRequestMethod } from '@/services/farcaster/index'
+import { Env, Verification } from '@/services/farcaster/types'
 import { NonNegative } from 'type-fest'
+
+const MAX_PAGES = 100
 
 interface Result {
   verifications: Verification[]
@@ -22,9 +25,18 @@ export const getVerifications = async (
   const { FARCASTER_API_BASE_URL: baseUrl } = env
   let currentCursor = cursor ?? ''
   let response: Response
-  let verifications: Verification[] = []
+  const verifications: Verification[] = []
+  let pageCount = 0
 
   do {
+    if (pageCount >= MAX_PAGES) {
+      logger.warn(
+        { fid, maxPages: MAX_PAGES },
+        'Reached verification pagination limit, stopping early.',
+      )
+      break
+    }
+
     response = await fetchRequest<Response>(
       baseUrl,
       undefined,
@@ -39,8 +51,9 @@ export const getVerifications = async (
       },
     )
 
-    verifications = [...verifications, ...response.result.verifications]
+    verifications.push(...response.result.verifications)
     currentCursor = response.next?.cursor ?? ''
+    pageCount += 1
   } while (response.next)
 
   return {

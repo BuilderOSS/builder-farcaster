@@ -11,11 +11,15 @@ const envSchema = z.object({
   FARCASTER_API_KEY: z.string().min(1, 'FARCASTER_API_KEY is required'),
   FARCASTER_API_BASE_URL: z
     .string()
-    .url('FARCASTER_API_BASE_URL must be a valid URL'),
-  FARCASTER_APP_FID: z.string().min(1).optional(),
+    .url('FARCASTER_API_BASE_URL must be a valid URL')
+    .default('https://api.farcaster.xyz'),
+  FARCASTER_APP_FID: z.string().min(1, 'FARCASTER_APP_FID is required'),
   FARCASTER_APP_KEY: z.string().min(1).optional(),
   FARCASTER_APP_KEY_PUBLIC: z.string().min(1).optional(),
-  CRON_SECRET: z.string().min(1, 'CRON_SECRET is required').optional(),
+  CRON_SECRET: z
+    .string()
+    .min(1, 'CRON_SECRET must not be empty when provided')
+    .optional(),
   ENABLE_TESTNET_CHAINS: z.string().optional(),
   NO_SEND_NOTIFICATIONS: z.string().optional(),
   NODE_ENV: z.enum(['development', 'production', 'test']),

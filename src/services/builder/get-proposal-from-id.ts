@@ -52,7 +52,16 @@ export const getProposalData = async (
     if (!response.proposal) {
       throw new Error(`Proposal does not exist: ${proposalId}`)
     }
-    return { proposal: response.proposal }
+
+    return {
+      proposal: {
+        ...response.proposal,
+        dao: {
+          ...response.proposal.dao,
+          chain,
+        },
+      },
+    }
   } catch (error) {
     console.error('Error fetching proposal data for proposal update:', error)
     throw error

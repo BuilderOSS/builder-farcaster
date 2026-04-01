@@ -41,7 +41,12 @@ export const getPropdateAttestations = async (): Promise<Result> => {
     )
 
     const query = gql`
-      query recentPropdates($fromTimestamp: BigInt!, $zeroHash: Bytes!) {
+      query recentPropdates(
+        $fromTimestamp: BigInt!
+        $zeroHash: Bytes!
+        $first: Int!
+        $skip: Int!
+      ) {
         proposalUpdates(
           where: {
             timestamp_gte: $fromTimestamp
@@ -50,7 +55,8 @@ export const getPropdateAttestations = async (): Promise<Result> => {
           }
           orderBy: timestamp
           orderDirection: desc
-          first: 1000
+          first: $first
+          skip: $skip
         ) {
           id
           creator
@@ -73,18 +79,34 @@ export const getPropdateAttestations = async (): Promise<Result> => {
       fromTimestamp: oneDayAgoInSeconds.toString(),
       zeroHash,
     }
+    const pageSize = 1000
 
     const perChainPropdates: Propdate[][] = []
 
     for (const { chain, endpoint } of propdateChainEndpoints) {
       const client = new GraphQLClient(endpoint)
-      const response = await runBuilderRequestWithRetry(
-        async () => client.request<Data>(query, variables),
-        `get-propdates chain=${chain.name}`,
-      )
+      const updates: Data['proposalUpdates'] = []
+      let skip = 0
+      let hasMore = true
+
+      while (hasMore) {
+        const response = await runBuilderRequestWithRetry(
+          async () =>
+            client.request<Data>(query, {
+              ...variables,
+              first: pageSize,
+              skip,
+            }),
+          `get-propdates chain=${chain.name} skip=${skip.toString()}`,
+        )
+
+        updates.push(...response.proposalUpdates)
+        hasMore = response.proposalUpdates.length === pageSize
+        skip += response.proposalUpdates.length
+      }
 
       const propdates = await Promise.all(
-        response.proposalUpdates.map(async (update) => {
+        updates.map(async (update) => {
           const propdateObject = await convertPropdateToObject(
             update.messageType,
             update.message,

@@ -5,8 +5,9 @@ import { logger } from '@/logger'
 import { addToQueue } from '@/queue'
 import { getDAOsTokenOwners } from '@/services/builder/get-daos-token-owners'
 import type { Dao, Owner } from '@/services/builder/types'
+import { getUserByVerification } from '@/services/farcaster/get-user-by-verification'
+import type { EnvWithAppKeys } from '@/services/farcaster/types'
 import { TargetingOptions } from '@/services/testing/targeting'
-import { getUserByVerification } from '@/services/warpcast/get-user-by-verification'
 import {
   concat,
   entries,
@@ -20,6 +21,19 @@ import {
   unique,
 } from 'remeda'
 import { JsonValue } from 'type-fest'
+
+/**
+ * Type guard for env objects that include required app-key auth fields.
+ * @param value - Runtime env object.
+ * @returns True when app-key fields are present.
+ */
+function hasAppKeyEnv(value: typeof env): value is EnvWithAppKeys {
+  return Boolean(
+    value.FARCASTER_APP_FID &&
+      value.FARCASTER_APP_KEY &&
+      value.FARCASTER_APP_KEY_PUBLIC,
+  )
+}
 
 /**
  * Returns whether invite processing is enabled.
@@ -253,6 +267,13 @@ async function mapFIDsToDAOs(ownerToDaosMap: Record<string, Dao[]>) {
  */
 async function fetchFIDForOwner(owner: string) {
   logger.debug({ owner }, 'Fetching FID for owner')
+
+  if (!hasAppKeyEnv(env)) {
+    throw new Error(
+      'Missing FARCASTER_APP_FID/FARCASTER_APP_KEY/FARCASTER_APP_KEY_PUBLIC for invite owner lookup',
+    )
+  }
+
   const {
     user: { fid },
   } = await getUserByVerification(env, owner)

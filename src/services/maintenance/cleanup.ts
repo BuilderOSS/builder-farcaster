@@ -42,6 +42,8 @@ export async function cleanupDatabase(): Promise<CleanupResult> {
       },
     },
     select: {
+      lockedAt: true,
+      lockedBy: true,
       maxRetries: true,
       retries: true,
       taskId: true,
@@ -55,9 +57,12 @@ export async function cleanupDatabase(): Promise<CleanupResult> {
     const nextRetryCount = task.retries + 1
 
     if (nextRetryCount >= task.maxRetries) {
-      await prisma.queue.update({
+      const result = await prisma.queue.updateMany({
         where: {
           taskId: task.taskId,
+          status: 'processing',
+          lockedAt: task.lockedAt,
+          lockedBy: task.lockedBy,
         },
         data: {
           lastError:
@@ -68,13 +73,19 @@ export async function cleanupDatabase(): Promise<CleanupResult> {
           status: 'failed',
         },
       })
-      failedStaleProcessingTasks += 1
+
+      if (result.count > 0) {
+        failedStaleProcessingTasks += 1
+      }
       continue
     }
 
-    await prisma.queue.update({
+    const result = await prisma.queue.updateMany({
       where: {
         taskId: task.taskId,
+        status: 'processing',
+        lockedAt: task.lockedAt,
+        lockedBy: task.lockedBy,
       },
       data: {
         availableAt: new Date(now),
@@ -86,7 +97,10 @@ export async function cleanupDatabase(): Promise<CleanupResult> {
         status: 'pending',
       },
     })
-    recoveredStaleProcessingTasks += 1
+
+    if (result.count > 0) {
+      recoveredStaleProcessingTasks += 1
+    }
   }
 
   const [

@@ -7,11 +7,12 @@ import {
 } from '@/commands'
 import { logger } from '@/logger'
 import { addToQueue } from '@/queue'
-import { Proposal } from '@/services/builder/types'
+import { Chain, Proposal } from '@/services/builder/types'
 import { getPropdateAttestations } from '@/services/eas/get-propdate-attestations'
 import { TargetingOptions } from '@/services/testing/targeting'
 import { filter } from 'remeda'
 import { JsonValue } from 'type-fest'
+import { Hex } from 'viem'
 
 /**
  * Checks whether the follower should be processed based on targeting options.
@@ -47,8 +48,8 @@ function getProposalKey(chainId: number, proposalId: string): string {
  */
 async function buildProposalLookup(
   proposalRefs: {
-    chain: { id: number }
-    proposalId: string
+    chain: Chain
+    proposalId: Hex
   }[],
 ): Promise<Map<string, Proposal | null | undefined>> {
   const uniqueRefs = new Map<string, (typeof proposalRefs)[number]>()
@@ -202,8 +203,10 @@ async function handleProposalUpdates(options: TargetingOptions) {
           continue
         }
 
+        const proposalDaoKey = `${proposal.dao.id.toLowerCase()}:${proposal.dao.chain.id.toString()}`
+
         // If the proposal's DAO ID is not in the list of DAOs for the current follower, skip to the next update
-        if (!daos.includes(proposal.dao.id)) {
+        if (!daos.includes(proposalDaoKey)) {
           logger.debug(
             {
               propdateId: propdate.id,

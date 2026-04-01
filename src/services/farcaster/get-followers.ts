@@ -1,5 +1,5 @@
-import { fetchRequest, HttpRequestMethod } from '@/services/warpcast/index'
-import { Env, User } from '@/services/warpcast/types'
+import { fetchRequest, HttpRequestMethod } from '@/services/farcaster/index'
+import { Env, User } from '@/services/farcaster/types'
 
 interface Result {
   users: User[]

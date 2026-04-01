@@ -4,7 +4,7 @@
 [![Build](https://github.com/BuilderOSS/builder-farcaster/actions/workflows/build.yml/badge.svg)](https://github.com/BuilderOSS/builder-farcaster/actions/workflows/build.yml)
 [![License](https://img.shields.io/github/license/BuilderOSS/builder-farcaster)](https://github.com/BuilderOSS/builder-farcaster/blob/master/LICENSE)
 [![X (formerly Twitter) Follow](https://img.shields.io/badge/follow-%40nekofar-ffffff?logo=x&style=flat)](https://x.com/nekofar)
-[![Farcaster (Warpcast) Follow](https://img.shields.io/badge/follow-%40nekofar-855DCD.svg?logo=data:image/svg%2bxml;base64,PHN2ZyB3aWR0aD0iMzIzIiBoZWlnaHQ9IjI5NyIgdmlld0JveD0iMCAwIDMyMyAyOTciIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxwYXRoIGQ9Ik01NS41ODY3IDAuNzMzMzM3SDI2My40MTNWMjk2LjI2N0gyMzIuOTA3VjE2MC44OTNIMjMyLjYwN0MyMjkuMjM2IDEyMy40NzkgMTk3Ljc5MiA5NC4xNiAxNTkuNSA5NC4xNkMxMjEuMjA4IDk0LjE2IDg5Ljc2NDIgMTIzLjQ3OSA4Ni4zOTI2IDE2MC44OTNIODYuMDkzM1YyOTYuMjY3SDU1LjU4NjdWMC43MzMzMzdaIiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNMC4yOTMzMzUgNDIuNjhMMTIuNjg2NyA4NC42MjY3SDIzLjE3MzNWMjU0LjMyQzE3LjkwODIgMjU0LjMyIDEzLjY0IDI1OC41ODggMTMuNjQgMjYzLjg1M1YyNzUuMjkzSDExLjczMzNDNi40NjgyMiAyNzUuMjkzIDIuMiAyNzkuNTYyIDIuMiAyODQuODI3VjI5Ni4yNjdIMTA4Ljk3M1YyODQuODI3QzEwOC45NzMgMjc5LjU2MiAxMDQuNzA1IDI3NS4yOTMgOTkuNDQgMjc1LjI5M0g5Ny41MzMzVjI2My44NTNDOTcuNTMzMyAyNTguNTg4IDkzLjI2NTEgMjU0LjMyIDg4IDI1NC4zMkg3Ni41NlY0Mi42OEgwLjI5MzMzNVoiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGQ9Ik0yMzQuODEzIDI1NC4zMkMyMjkuNTQ4IDI1NC4zMiAyMjUuMjggMjU4LjU4OCAyMjUuMjggMjYzLjg1M1YyNzUuMjkzSDIyMy4zNzNDMjE4LjEwOCAyNzUuMjkzIDIxMy44NCAyNzkuNTYyIDIxMy44NCAyODQuODI3VjI5Ni4yNjdIMzIwLjYxM1YyODQuODI3QzMyMC42MTMgMjc5LjU2MiAzMTYuMzQ1IDI3NS4yOTMgMzExLjA4IDI3NS4yOTNIMzA5LjE3M1YyNjMuODUzQzMwOS4xNzMgMjU4LjU4OCAzMDQuOTA1IDI1NC4zMiAyOTkuNjQgMjU0LjMyVjg0LjYyNjdIMzEwLjEyN0wzMjIuNTIgNDIuNjhIMjQ2LjI1M1YyNTQuMzJIMjM0LjgxM1oiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo=&style=flat)](https://warpcast.com/nekofar)
+[![Farcaster Follow](https://img.shields.io/badge/follow-%40nekofar-855DCD.svg?logo=data:image/svg%2bxml;base64,PHN2ZyB3aWR0aD0iMzIzIiBoZWlnaHQ9IjI5NyIgdmlld0JveD0iMCAwIDMyMyAyOTciIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxwYXRoIGQ9Ik01NS41ODY3IDAuNzMzMzM3SDI2My40MTNWMjk2LjI2N0gyMzIuOTA3VjE2MC44OTNIMjMyLjYwN0MyMjkuMjM2IDEyMy40NzkgMTk3Ljc5MiA5NC4xNiAxNTkuNSA5NC4xNkMxMjEuMjA4IDk0LjE2IDg5Ljc2NDIgMTIzLjQ3OSA4Ni4zOTI2IDE2MC44OTNIODYuMDkzM1YyOTYuMjY3SDU1LjU4NjdWMC43MzMzMzdaIiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNMC4yOTMzMzUgNDIuNjhMMTIuNjg2NyA4NC42MjY3SDIzLjE3MzNWMjU0LjMyQzE3LjkwODIgMjU0LjMyIDEzLjY0IDI1OC41ODggMTMuNjQgMjYzLjg1M1YyNzUuMjkzSDExLjczMzNDNi40NjgyMiAyNzUuMjkzIDIuMiAyNzkuNTYyIDIuMiAyODQuODI3VjI5Ni4yNjdIMTA4Ljk3M1YyODQuODI3QzEwOC45NzMgMjc5LjU2MiAxMDQuNzA1IDI3NS4yOTMgOTkuNDQgMjc1LjI5M0g5Ny41MzMzVjI2My44NTNDOTcuNTMzMyAyNTguNTg4IDkzLjI2NTEgMjU0LjMyIDg4IDI1NC4zMkg3Ni41NlY0Mi42OEgwLjI5MzMzNVoiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGQ9Ik0yMzQuODEzIDI1NC4zMkMyMjkuNTQ4IDI1NC4zMiAyMjUuMjggMjU4LjU4OCAyMjUuMjggMjYzLjg1M1YyNzUuMjkzSDIyMy4zNzNDMjE4LjEwOCAyNzUuMjkzIDIxMy44NCAyNzkuNTYyIDIxMy44NCAyODQuODI3VjI5Ni4yNjdIMzIwLjYxM1YyODQuODI3QzMyMC42MTMgMjc5LjU2MiAzMTYuMzQ1IDI3NS4yOTMgMzExLjA4IDI3NS4yOTNIMzA5LjE3M1YyNjMuODUzQzMwOS4xNzMgMjU4LjU4OCAzMDQuOTA1IDI1NC4zMiAyOTkuNjQgMjU0LjMyVjg0LjYyNjdIMzEwLjEyN0wzMjIuNTIgNDIuNjhIMjQ2LjI1M1YyNTQuMzJIMjM0LjgxM1oiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo=&style=flat)](https://farcaster.xyz/nekofar)
 [![Donate](https://img.shields.io/badge/donate-nekofar.crypto-a2b9bc?logo=ko-fi&logoColor=white)](https://ud.me/nekofar.crypto)
 
 A Farcaster bot (@builderbot) that automatically sends you notifications for all your [Nouns Builder](https://nouns.build/) DAOs. Never miss important governance updates again!
@@ -15,7 +15,7 @@ A Farcaster bot (@builderbot) that automatically sends you notifications for all
 
 ### 🚀 How it works
 
-1. **Follow @builderbot** on [Farcaster](https://warpcast.com/builderbot)
+1. **Follow @builderbot** on [Farcaster](https://farcaster.xyz/builderbot)
 2. The bot automatically detects which DAOs you're a member of by checking your wallet addresses
 3. You'll receive direct cast notifications for:
    - **New proposals** created in your DAOs
@@ -86,8 +86,10 @@ This repository contains the source code for the @builderbot Farcaster bot.
 
    Then configure the following variables:
 
-   - `FARCASTER_APP_FID`, `FARCASTER_APP_KEY`, `FARCASTER_APP_KEY_PUBLIC` - App-key auth and bot identity
-   - `FARCASTER_API_KEY` - Your Farcaster Direct Cast API key
+   - `FARCASTER_APP_FID` (required) - Bot identity FID
+   - `FARCASTER_APP_KEY`, `FARCASTER_APP_KEY_PUBLIC` (optional) - Required only for app-key authenticated routes (for example invite owner verification)
+   - `FARCASTER_API_BASE_URL` (optional - defaults to `https://api.farcaster.xyz`)
+   - `FARCASTER_API_KEY` (required) - Your Farcaster Direct Cast API key
    - `NEXT_PUBLIC_GOLDSKY_PROJECT_ID` (optional) - Goldsky project id override
    - `NEXT_PUBLIC_NETWORK_TYPE` (optional) - set `testnet` to use `dev` subgraph version
    - `DATABASE_URL` - Postgres pooled connection string
@@ -114,6 +116,7 @@ This repository contains the source code for the @builderbot Farcaster bot.
 - `pnpm dev:consume` - Consume notification queue only
 - `pnpm dev:propdates` - Process proposal updates only
 - `pnpm dev:invites` - Process invitations
+- `pnpm dev:fid` - Resolve a Farcaster FID from username
 - `pnpm build` - Build the project
 - `pnpm test` - Run tests
 - `pnpm lint` - Run linting
@@ -124,11 +127,14 @@ This repository contains the source code for the @builderbot Farcaster bot.
 
 The bot is built with:
 
-- **CLI Interface**: Commander.js for command-line operations
+- **Runtime Model**: Vercel serverless cron handlers in `api/cron/*` orchestrate producers, consumer, and cleanup in production
+- **CLI Interface**: Commander.js powers local development and manual operational commands
 - **Queue System**: Postgres-backed task queue with retry/backoff logic
 - **Multi-chain Integration**: GraphQL queries to Builder subgraphs
 - **Farcaster Integration**: Farcaster client API for sending direct casts
 - **Database**: Prisma ORM with Postgres (Neon)
+
+Production does not run as a long-lived CLI process. Vercel Cron triggers HTTP routes that call the same command handlers used by the CLI.
 
 ## 🚀 Deployment
 
@@ -226,6 +232,8 @@ NEXT_PUBLIC_NETWORK_TYPE=<mainnet_or_testnet>
 FARCASTER_API_BASE_URL=https://api.farcaster.xyz
 FARCASTER_API_KEY=<your_api_key>
 FARCASTER_APP_FID=<app_fid>
+
+# Optional (required only for app-key authenticated routes)
 FARCASTER_APP_KEY=<ed25519_private_key_hex>
 FARCASTER_APP_KEY_PUBLIC=<ed25519_public_key_hex>
 CRON_SECRET=<shared_cron_secret>

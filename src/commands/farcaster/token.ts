@@ -1,5 +1,5 @@
 import { env } from '@/config'
-import { fetchRequest, HttpRequestMethod } from '@/services/warpcast'
+import { fetchRequest, HttpRequestMethod } from '@/services/farcaster'
 import { input } from '@inquirer/prompts'
 import { getPublicKeyAsync, utils } from '@noble/ed25519'
 import qrcode from 'qrcode-terminal'
@@ -44,6 +44,14 @@ interface CreateSignedKeyRequestBody {
   key: string
   requestFid: number
   signature: string
+}
+
+interface ErrorWithStatus {
+  status?: number
+  statusCode?: number
+  response?: {
+    status?: number
+  }
 }
 
 /**
@@ -127,10 +135,22 @@ async function createSignedKeyRequest(
       )
       return response.result.signedKeyRequest
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error)
-      if (!message.includes('Path') || !message.includes('does not exist')) {
-        throw error
+      const typedError = error as ErrorWithStatus
+      const status =
+        typedError.status ??
+        typedError.statusCode ??
+        typedError.response?.status
+
+      if (status === 404) {
+        continue
       }
+
+      const message = error instanceof Error ? error.message : String(error)
+      if (message.includes('Path') && message.includes('does not exist')) {
+        continue
+      }
+
+      throw error
     }
   }
 
@@ -176,7 +196,7 @@ async function waitForSignedKeyCompletion(
 /**
  * Creates and approves a Farcaster app key using signed-key-request flow.
  */
-export async function warpcastToken(): Promise<void> {
+export async function farcasterToken(): Promise<void> {
   const fid = await promptFid()
   const mnemonic = await promptMnemonic()
 
@@ -213,7 +233,7 @@ export async function warpcastToken(): Promise<void> {
     throw new Error('Signed key request response missing deeplinkUrl')
   }
 
-  console.log('\nOpen this URL in Warpcast and approve the signer request:\n')
+  console.log('\nOpen this URL in Farcaster and approve the signer request:\n')
   console.log(deeplinkUrl)
   console.log('\nQR code:\n')
   qrcode.generate(deeplinkUrl, { small: true })

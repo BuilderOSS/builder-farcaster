@@ -13,7 +13,7 @@
     "dev:invites": "node dist/index.js process invites",
     "dev:process": "node dist/index.js process proposals",
     "dev:propdates": "node dist/index.js process propdates",
-    "dev:tokengen": "node dist/index.js warpcast token",
+    "dev:tokengen": "node dist/index.js farcaster token",
     "lint": "eslint",
     "prepare": "husky || :",
     "prisma:generate": "prisma generate",
@@ -26,8 +26,8 @@
     "elliptic": ">=6.6.0"
   },
   "dependencies": {
-    "@buildeross/constants": "0.2.2",
-    "@buildeross/types": "0.2.2",
+    "@buildeross/constants": "0.3.0",
+    "@buildeross/types": "0.3.0",
     "@inquirer/prompts": "7.1.0",
     "@noble/ed25519": "2.3.0",
     "@prisma/client": "5.22.0",
@@ -47,7 +47,7 @@
     "remove-markdown": "0.6.0",
     "type-fest": "4.27.0",
     "uuid": "11.0.3",
-    "viem": "2.21.49",
+    "viem": "2.47.6",
     "wagmi": "2.18.1",
     "zod": "3.23.8"
   },

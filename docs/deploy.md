@@ -24,6 +24,7 @@ NEXT_PUBLIC_NETWORK_TYPE=<optional_mainnet_or_testnet>
 FARCASTER_API_BASE_URL=https://api.farcaster.xyz
 FARCASTER_API_KEY=<your_api_key>
 FARCASTER_APP_FID=<app_fid>
+# Optional (required only for app-key authenticated routes)
 FARCASTER_APP_KEY=<ed25519_private_key_hex>
 FARCASTER_APP_KEY_PUBLIC=<ed25519_public_key_hex>
 
@@ -38,7 +39,10 @@ TEST_TARGET_FIDS=
 TEST_TARGET_DAO_IDS=
 TEST_TARGET_CHAINS=
 TEST_DRY_RUN=false
+NO_SEND_NOTIFICATIONS=false
 ```
+
+`NO_SEND_NOTIFICATIONS` is an optional safety/debug flag. Set it to `true` for no-send mode while validating producers/consumers without sending Farcaster DMs.
 
 ### 3) Run Prisma Migrations
 
@@ -72,8 +76,3 @@ Cron jobs are defined in `vercel.json`:
 Producer schedules are staggered to reduce overlapping load (`:05` proposals, `:20` propdates).
 
 Testnet chains are excluded in production by default. Set `ENABLE_TESTNET_CHAINS=true` to include them for targeted testing.
-
-## Future Option
-
-Today this bot uses `@buildeross/constants` for endpoint resolution and local GraphQL request code.
-We can later migrate request execution to `@buildeross/sdk/subgraph` helpers once we want full SDK query ownership.

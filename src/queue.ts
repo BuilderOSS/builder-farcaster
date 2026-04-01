@@ -1,4 +1,5 @@
 import { prisma } from '@/db'
+import { Prisma } from '@prisma/client'
 import type { JsonValue } from 'type-fest'
 import { v4 as uuidv4 } from 'uuid'
 
@@ -19,31 +20,26 @@ export async function addToQueue(data: JsonValue): Promise<void> {
   const timestamp = new Date()
   const dataString = JSON.stringify(data)
 
-  const existingTask = await prisma.queue.findFirst({
-    where: {
-      data: dataString,
-      status: {
-        in: ['pending', 'processing'],
+  try {
+    await prisma.queue.create({
+      data: {
+        taskId,
+        data: dataString,
+        timestamp,
+        status: 'pending',
+        availableAt: timestamp,
       },
-    },
-    select: {
-      taskId: true,
-    },
-  })
+    })
+  } catch (error) {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === 'P2002'
+    ) {
+      return
+    }
 
-  if (existingTask) {
-    return
+    throw error
   }
-
-  await prisma.queue.create({
-    data: {
-      taskId,
-      data: dataString,
-      timestamp,
-      status: 'pending',
-      availableAt: timestamp,
-    },
-  })
 }
 
 /**
@@ -122,11 +118,19 @@ export async function claimPendingTasks(
 /**
  * Marks a task as completed.
  * @param taskId - The unique identifier for the task to mark as completed.
- * @returns Resolves when the task has been successfully marked as completed.
+ * @param workerId - Worker currently holding the task lock.
+ * @returns True when the task transition is applied.
  */
-export async function completeTask(taskId: string): Promise<void> {
-  await prisma.queue.update({
-    where: { taskId },
+export async function completeTask(
+  taskId: string,
+  workerId: string,
+): Promise<boolean> {
+  const result = await prisma.queue.updateMany({
+    where: {
+      taskId,
+      status: 'processing',
+      lockedBy: workerId,
+    },
     data: {
       status: 'completed',
       completedAt: new Date(),
@@ -135,30 +139,47 @@ export async function completeTask(taskId: string): Promise<void> {
       lastError: null,
     },
   })
+
+  return result.count > 0
 }
 
 /**
  * Retries a task if it failed.
  * @param taskId - The unique identifier for the task to retry.
+ * @param workerId - Worker currently holding the task lock.
  * @param reason - Optional error reason for diagnostics.
- * @returns Resolves when the task has been successfully updated for retry.
+ * @returns True when the task transition is applied.
  */
 export async function retryTask(
   taskId: string,
+  workerId: string,
   reason?: string,
-): Promise<void> {
-  const task = await prisma.queue.findUnique({ where: { taskId } })
+): Promise<boolean> {
+  const task = await prisma.queue.findFirst({
+    where: {
+      taskId,
+      status: 'processing',
+      lockedBy: workerId,
+    },
+  })
 
   if (!task) {
-    return
+    return false
   }
 
-  const maxRetries = Number(task.maxRetries || DEFAULT_MAX_RETRIES)
+  const parsedMaxRetries = Number(task.maxRetries)
+  const maxRetries = Number.isFinite(parsedMaxRetries)
+    ? parsedMaxRetries
+    : DEFAULT_MAX_RETRIES
   const nextRetryCount = task.retries + 1
 
   if (nextRetryCount >= maxRetries) {
-    await prisma.queue.update({
-      where: { taskId },
+    const result = await prisma.queue.updateMany({
+      where: {
+        taskId,
+        status: 'processing',
+        lockedBy: workerId,
+      },
       data: {
         retries: nextRetryCount,
         status: 'failed',
@@ -167,14 +188,19 @@ export async function retryTask(
         lockedBy: null,
       },
     })
-    return
+
+    return result.count > 0
   }
 
   const retryDelaySeconds = Math.min(2 ** nextRetryCount * 30, 3600)
   const availableAt = new Date(Date.now() + retryDelaySeconds * 1000)
 
-  await prisma.queue.update({
-    where: { taskId },
+  const result = await prisma.queue.updateMany({
+    where: {
+      taskId,
+      status: 'processing',
+      lockedBy: workerId,
+    },
     data: {
       retries: nextRetryCount,
       status: 'pending',
@@ -184,4 +210,6 @@ export async function retryTask(
       lockedBy: null,
     },
   })
+
+  return result.count > 0
 }

@@ -48,25 +48,25 @@ export const getActiveProposals = async (): Promise<Result> => {
   `
 
   try {
-    const allProposals: Proposal[] = []
+    const chainProposalGroups = await Promise.all(
+      chainEndpoints.map(async ({ chain, endpoint }) => {
+        const client = new GraphQLClient(endpoint)
+        const response = await runBuilderRequestWithRetry(
+          async () => client.request<Data>(query),
+          `get-active-proposals chain=${chain.name}`,
+        )
 
-    for (const { chain, endpoint } of chainEndpoints) {
-      const client = new GraphQLClient(endpoint)
-      const response = await runBuilderRequestWithRetry(
-        async () => client.request<Data>(query),
-        `get-active-proposals chain=${chain.name}`,
-      )
-
-      allProposals.push(
-        ...response.proposals.map((proposal) => ({
+        return response.proposals.map((proposal) => ({
           ...proposal,
           dao: {
             ...proposal.dao,
             chain,
           },
-        })),
-      )
-    }
+        }))
+      }),
+    )
+
+    const allProposals = chainProposalGroups.flat()
 
     const uniqueProposals = pipe(
       allProposals,
