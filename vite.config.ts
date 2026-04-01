@@ -3,6 +3,7 @@ import tsconfigPaths from 'vite-tsconfig-paths'
 import packageJson from './package.json' // Import the package.json file
 
 const externalDeps = Object.keys(packageJson.dependencies || {})
+const nodeBuiltins = [/^node:.*/]
 
 export default defineConfig({
   plugins: [
@@ -18,7 +19,7 @@ export default defineConfig({
     },
     rollupOptions: {
       treeshake: true, // Ensure tree-shaking is on
-      external: externalDeps,
+      external: [...externalDeps, ...nodeBuiltins],
     },
     outDir: 'dist', // Output directory
     emptyOutDir: true, // Clean output directory before builds

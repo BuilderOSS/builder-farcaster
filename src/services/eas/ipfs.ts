@@ -1,4 +1,5 @@
 import { CID } from 'multiformats/cid'
+import { lookup } from 'node:dns/promises'
 
 /**
  * Checks if a string is a valid IPFS CID
@@ -169,8 +170,7 @@ async function assertPublicHttpTarget(rawUrl: string): Promise<void> {
   }
 
   if (!isIPv4Address(hostname) && !isIPv6Address(hostname)) {
-    const dns = await import('node:dns/promises')
-    const records = await dns.lookup(hostname, {
+    const records = await lookup(hostname, {
       all: true,
       verbatim: true,
     })
