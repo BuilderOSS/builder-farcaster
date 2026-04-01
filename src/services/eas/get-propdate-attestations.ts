@@ -35,6 +35,23 @@ interface Result {
   propdates: Propdate[]
 }
 
+/**
+ * Identifies fetch/network safety failures that should be retried upstream.
+ * @param error - Unknown thrown error.
+ * @returns True when the error comes from URL fetch/network safety checks.
+ */
+function isFetchPayloadError(error: unknown): boolean {
+  if (!(error instanceof Error)) {
+    return false
+  }
+
+  return (
+    error.message.includes('Failed to fetch from URL') ||
+    error.message.includes('Blocked private-network') ||
+    error.message.includes('Unsupported URI')
+  )
+}
+
 export const getPropdateAttestations = async (): Promise<Result> => {
   try {
     const limit = pLimit(10)
@@ -91,54 +108,61 @@ export const getPropdateAttestations = async (): Promise<Result> => {
     const perChainPropdates: Propdate[][] = []
 
     for (const { chain, endpoint } of propdateChainEndpoints) {
-      const client = new GraphQLClient(endpoint)
-      const chainPropdates: Propdate[] = []
-      let skip = 0
-      let hasMore = true
+      try {
+        const client = new GraphQLClient(endpoint)
+        const chainPropdates: Propdate[] = []
+        let skip = 0
+        let hasMore = true
 
-      while (hasMore) {
-        const response = await runBuilderRequestWithRetry(
-          async () =>
-            client.request<Data>(query, {
-              ...variables,
-              first: pageSize,
-              skip,
+        while (hasMore) {
+          const response = await runBuilderRequestWithRetry(
+            async () =>
+              client.request<Data>(query, {
+                ...variables,
+                first: pageSize,
+                skip,
+              }),
+            `get-propdates chain=${chain.name} skip=${skip.toString()}`,
+          )
+
+          const pagePropdates = await Promise.all(
+            response.proposalUpdates.map(async (update) => {
+              const propdateObject = await limit(() =>
+                convertPropdateToObject(
+                  update.messageType,
+                  update.message,
+                  update.proposal.proposalId,
+                  update.originalMessageId,
+                ),
+              )
+
+              return {
+                ...propdateObject,
+                chain,
+                id: update.id,
+                recipient: update.proposal.dao.tokenAddress,
+                timeCreated: Number(update.timestamp),
+              }
             }),
-          `get-propdates chain=${chain.name} skip=${skip.toString()}`,
+          )
+
+          chainPropdates.push(
+            ...pagePropdates.filter(
+              (propdate) => propdate.proposalId !== zeroHash,
+            ),
+          )
+
+          hasMore = response.proposalUpdates.length === pageSize
+          skip += response.proposalUpdates.length
+        }
+
+        perChainPropdates.push(chainPropdates)
+      } catch (error) {
+        console.error(
+          `Error fetching propdates for chain=${chain.name} endpoint=${endpoint}:`,
+          error,
         )
-
-        const pagePropdates = await Promise.all(
-          response.proposalUpdates.map(async (update) => {
-            const propdateObject = await limit(() =>
-              convertPropdateToObject(
-                update.messageType,
-                update.message,
-                update.proposal.proposalId,
-                update.originalMessageId,
-              ),
-            )
-
-            return {
-              ...propdateObject,
-              chain,
-              id: update.id,
-              recipient: update.proposal.dao.tokenAddress,
-              timeCreated: Number(update.timestamp),
-            }
-          }),
-        )
-
-        chainPropdates.push(
-          ...pagePropdates.filter(
-            (propdate) => propdate.proposalId !== zeroHash,
-          ),
-        )
-
-        hasMore = response.proposalUpdates.length === pageSize
-        skip += response.proposalUpdates.length
       }
-
-      perChainPropdates.push(chainPropdates)
     }
 
     const propdates = pipe(
@@ -182,7 +206,12 @@ async function convertPropdateToObject(
         break
       case MessageType.URL_JSON: {
         const response = await fetchFromURL(result.message)
-        result.parsedMessage = JSON.parse(response) as PropdateMessage
+
+        try {
+          result.parsedMessage = JSON.parse(response) as PropdateMessage
+        } catch {
+          result.parsedMessage = { content: response } as PropdateMessage
+        }
         break
       }
       case MessageType.URL_TEXT: {
@@ -197,6 +226,10 @@ async function convertPropdateToObject(
 
     return result
   } catch (error) {
+    if (isFetchPayloadError(error)) {
+      throw error
+    }
+
     console.error('Error parsing propdate payload:', error)
 
     return {

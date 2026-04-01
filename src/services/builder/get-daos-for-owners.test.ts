@@ -67,6 +67,7 @@ describe('getDAOsForOwners', () => {
 
     const result = await getDAOsForOwners({} as never, ['0xA'])
 
+    expect(runBuilderRequestWithRetryMock).toHaveBeenCalledTimes(2)
     expect(result.daos).toHaveLength(2)
     expect(result.ownerDaoIdsMap['0xa']).toEqual(['0xdao:8453', '0xdao:1'])
   })

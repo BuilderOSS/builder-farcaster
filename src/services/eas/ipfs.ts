@@ -28,6 +28,29 @@ const IPFS_ENDPOINTS = [
 ]
 
 const REQUEST_TIMEOUT = 10000 // 10 seconds
+const MAX_REDIRECTS = 5
+
+/**
+ * Removes surrounding IPv6 brackets from host literals.
+ * @param hostname - URL hostname.
+ * @returns Hostname without brackets.
+ */
+function stripIPv6Brackets(hostname: string): string {
+  if (hostname.startsWith('[') && hostname.endsWith(']')) {
+    return hostname.slice(1, -1)
+  }
+
+  return hostname
+}
+
+/**
+ * Checks whether an HTTP status code is a redirect.
+ * @param status - HTTP status code.
+ * @returns True when status is a redirect code.
+ */
+function isRedirectStatus(status: number): boolean {
+  return [301, 302, 303, 307, 308].includes(status)
+}
 
 /**
  * Checks whether an IPv4 address is in a private/local range.
@@ -133,9 +156,9 @@ function isPrivateIPAddress(address: string): boolean {
  * Ensures an HTTP URL does not resolve to private-network targets.
  * @param rawUrl - Candidate HTTP(S) URL.
  */
-function assertPublicHttpTarget(rawUrl: string): void {
+async function assertPublicHttpTarget(rawUrl: string): Promise<void> {
   const parsed = new URL(rawUrl)
-  const hostname = parsed.hostname.toLowerCase()
+  const hostname = stripIPv6Brackets(parsed.hostname.toLowerCase())
 
   if (hostname === 'localhost') {
     throw new Error(`Blocked private-network URL host: ${hostname}`)
@@ -143,6 +166,22 @@ function assertPublicHttpTarget(rawUrl: string): void {
 
   if (isPrivateIPAddress(hostname)) {
     throw new Error(`Blocked private-network IP: ${hostname}`)
+  }
+
+  if (!isIPv4Address(hostname) && !isIPv6Address(hostname)) {
+    const dns = await import('node:dns/promises')
+    const records = await dns.lookup(hostname, {
+      all: true,
+      verbatim: true,
+    })
+
+    for (const record of records) {
+      if (isPrivateIPAddress(record.address)) {
+        throw new Error(
+          `Blocked private-network DNS target for ${hostname}: ${record.address}`,
+        )
+      }
+    }
   }
 }
 
@@ -182,24 +221,52 @@ const fetchFromIPFS = async (cid: string | undefined): Promise<string> => {
 
 const fetchWithTimeout = async (url: string) => {
   try {
-    assertPublicHttpTarget(url)
+    let currentUrl = url
 
-    const controller = new AbortController()
-    const { signal } = controller
+    for (
+      let redirectCount = 0;
+      redirectCount <= MAX_REDIRECTS;
+      redirectCount++
+    ) {
+      await assertPublicHttpTarget(currentUrl)
 
-    // Set a 10s timeout for the request
-    const timeoutId = setTimeout(function () {
-      controller.abort()
-    }, REQUEST_TIMEOUT)
+      const controller = new AbortController()
+      const { signal } = controller
 
-    const res = await fetch(url, { signal })
-    clearTimeout(timeoutId)
+      // Set a 10s timeout for the request
+      const timeoutId = setTimeout(function () {
+        controller.abort()
+      }, REQUEST_TIMEOUT)
 
-    if (!res.ok) {
-      throw new Error(`HTTP error! Status: ${res.status.toString()}`)
+      let res: Response
+
+      try {
+        res = await fetch(currentUrl, { redirect: 'manual', signal })
+      } finally {
+        clearTimeout(timeoutId)
+      }
+
+      if (isRedirectStatus(res.status)) {
+        const location = res.headers.get('location')
+
+        if (!location) {
+          throw new Error(
+            `Redirect response missing location header: ${res.status.toString()}`,
+          )
+        }
+
+        currentUrl = new URL(location, currentUrl).toString()
+        continue
+      }
+
+      if (!res.ok) {
+        throw new Error(`HTTP error! Status: ${res.status.toString()}`)
+      }
+
+      return await res.text()
     }
 
-    return await res.text()
+    throw new Error(`Too many redirects while fetching URL: ${url}`)
   } catch (error) {
     console.error(`Failed to fetch from URL: ${url}`, error)
     throw new Error(`Failed to fetch from URL: ${url}`)

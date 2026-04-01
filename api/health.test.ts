@@ -68,6 +68,9 @@ describe('health api', () => {
 
   it('returns detailed queue metrics with cron auth', async () => {
     isAuthorizedCronRequestMock.mockReturnValue(true)
+    const oldestPending = new Date(Date.now() - 31 * 60 * 1000)
+    const oldestProcessing = new Date(Date.now() - 21 * 60 * 1000)
+
     prismaMock.queue.count
       .mockResolvedValueOnce(10)
       .mockResolvedValueOnce(2)
@@ -75,10 +78,10 @@ describe('health api', () => {
       .mockResolvedValueOnce(7)
     prismaMock.queue.findFirst
       .mockResolvedValueOnce({
-        timestamp: new Date(Date.now() - 31 * 60 * 1000),
+        timestamp: oldestPending,
       })
       .mockResolvedValueOnce({
-        lockedAt: new Date(Date.now() - 21 * 60 * 1000),
+        lockedAt: oldestProcessing,
       })
     const { payload, res } = createRes()
 
@@ -93,9 +96,17 @@ describe('health api', () => {
       queue: {
         completedLast24h: 7,
         failed: 1,
+        oldestPendingAgeMinutes: 31,
+        oldestPendingAt: oldestPending.toISOString(),
+        oldestProcessingAgeMinutes: 21,
+        oldestProcessingLockedAt: oldestProcessing.toISOString(),
         pending: 10,
         processing: 2,
       },
+      warnings: [
+        'oldest pending task age is high (31m > 30m)',
+        'oldest processing task age is high (21m > 20m)',
+      ],
     })
   })
 })

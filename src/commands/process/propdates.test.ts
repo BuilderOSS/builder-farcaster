@@ -117,4 +117,16 @@ describe('processUpdates', () => {
 
     expect(addToQueueMock).not.toHaveBeenCalled()
   })
+
+  it('filters by target fids and skips non-target followers', async () => {
+    await processUpdates({ targetFids: [999999] })
+
+    expect(addToQueueMock).not.toHaveBeenCalled()
+  })
+
+  it('filters by target dao ids', async () => {
+    await processUpdates({ targetDaoIds: ['0xdef'] })
+
+    expect(addToQueueMock).not.toHaveBeenCalled()
+  })
 })
