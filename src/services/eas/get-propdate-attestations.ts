@@ -42,10 +42,12 @@ export const getPropdateAttestations = async (): Promise<Result> => {
     const oneDayAgoInSeconds = Math.floor(
       DateTime.now().minus({ hours: 24 }).toSeconds(),
     )
+    const toTimestamp = Math.floor(DateTime.now().toSeconds())
 
     const query = gql`
       query recentPropdates(
         $fromTimestamp: BigInt!
+        $toTimestamp: BigInt!
         $zeroHash: Bytes!
         $first: Int!
         $skip: Int!
@@ -53,6 +55,7 @@ export const getPropdateAttestations = async (): Promise<Result> => {
         proposalUpdates(
           where: {
             timestamp_gte: $fromTimestamp
+            timestamp_lte: $toTimestamp
             deleted: false
             originalMessageId: $zeroHash
           }
@@ -80,6 +83,7 @@ export const getPropdateAttestations = async (): Promise<Result> => {
 
     const variables = {
       fromTimestamp: oneDayAgoInSeconds.toString(),
+      toTimestamp: toTimestamp.toString(),
       zeroHash,
     }
     const pageSize = 1000

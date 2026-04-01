@@ -235,11 +235,11 @@ NEXT_PUBLIC_NETWORK_TYPE=<mainnet_or_testnet> # allowed: mainnet|testnet; unset 
 FARCASTER_API_BASE_URL=https://api.farcaster.xyz
 FARCASTER_API_KEY=<your_api_key>
 FARCASTER_APP_FID=<app_fid>
+CRON_SECRET=<shared_cron_secret>
 
 # Optional (required only for app-key authenticated routes)
 FARCASTER_APP_KEY=<ed25519_private_key_hex>
 FARCASTER_APP_KEY_PUBLIC=<ed25519_public_key_hex>
-CRON_SECRET=<shared_cron_secret>
 
 # Feature flags / test targeting
 ENABLE_TESTNET_CHAINS=false
