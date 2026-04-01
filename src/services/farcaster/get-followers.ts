@@ -1,9 +1,12 @@
+import { logger } from '@/logger'
 import {
   fetchRequest,
   HttpRequestMethod,
   runFarcasterRequestWithRetry,
 } from '@/services/farcaster/index'
 import { Env, User } from '@/services/farcaster/types'
+
+const MAX_PAGES = 100
 
 interface Result {
   users: User[]
@@ -25,12 +28,21 @@ interface Response {
  * @returns - A promise that resolves to an object containing all retrieved users.
  */
 export const getFollowers = async (env: Env, fid: number): Promise<Result> => {
-  const { FARCASTER_API_BASE_URL: baseUrl } = env
+  const { FARCASTER_API_BASE_URL: baseUrl, FARCASTER_API_KEY: apiKey } = env
   let newCursor = ''
   const users: User[] = []
   let response: Response
+  let page = 0
 
   do {
+    if (page >= MAX_PAGES) {
+      logger.warn(
+        { cursor: newCursor || 'start', fid, maxPages: MAX_PAGES },
+        'Reached followers pagination limit, stopping early.',
+      )
+      break
+    }
+
     const params = {
       fid: fid.toString(),
       cursor: newCursor,
@@ -40,7 +52,7 @@ export const getFollowers = async (env: Env, fid: number): Promise<Result> => {
       async () =>
         fetchRequest<Response>(
           baseUrl,
-          undefined,
+          apiKey,
           HttpRequestMethod.GET,
           '/v2/followers',
           {
@@ -51,6 +63,7 @@ export const getFollowers = async (env: Env, fid: number): Promise<Result> => {
     )
     users.push(...response.result.users)
     newCursor = response.next ? response.next.cursor : ''
+    page += 1
   } while (response.next)
 
   return { users }

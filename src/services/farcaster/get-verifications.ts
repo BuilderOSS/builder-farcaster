@@ -26,7 +26,7 @@ export const getVerifications = async (
   cursor?: string,
   limit: NonNegative<number> = 50,
 ): Promise<Result> => {
-  const { FARCASTER_API_BASE_URL: baseUrl } = env
+  const { FARCASTER_API_BASE_URL: baseUrl, FARCASTER_API_KEY: apiKey } = env
   let currentCursor = cursor ?? ''
   let response: Response
   const verifications: Verification[] = []
@@ -45,7 +45,7 @@ export const getVerifications = async (
       async () =>
         fetchRequest<Response>(
           baseUrl,
-          undefined,
+          apiKey,
           HttpRequestMethod.GET,
           '/v2/verifications',
           {

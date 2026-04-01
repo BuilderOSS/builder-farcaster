@@ -28,6 +28,25 @@ interface InvitationData {
 }
 
 /**
+ * Checks whether a raw queue payload matches expected task shape.
+ * @param value - Raw queue task data.
+ * @returns True when payload contains a supported task type.
+ */
+function isTaskData(value: unknown): value is TaskData {
+  if (typeof value !== 'object' || value === null) {
+    return false
+  }
+
+  const maybeTask = value as { type?: unknown }
+
+  if (typeof maybeTask.type !== 'string' || maybeTask.type.length === 0) {
+    return false
+  }
+
+  return maybeTask.type === 'notification' || maybeTask.type === 'invitation'
+}
+
+/**
  * Formats a proposal notification message
  * @param proposal - The proposal data to format into a message
  * @returns A formatted string containing the proposal notification message
@@ -261,9 +280,34 @@ export const queueConsumeCommand = async (limit?: number) => {
 
     for (const task of tasks) {
       logger.info({ taskId: task.taskId, workerId }, 'Processing task')
-
-      const taskData = task.data as TaskData
       let handledSuccessfully = false
+
+      if (!isTaskData(task.data)) {
+        logger.error(
+          {
+            taskData: task.data,
+            taskId: task.taskId,
+          },
+          'Malformed task payload. Expected supported task schema.',
+        )
+
+        const retried = await retryTask(
+          task.taskId,
+          workerId,
+          'Malformed task payload schema',
+        )
+
+        if (!retried) {
+          logger.warn(
+            { taskId: task.taskId, workerId },
+            'Skipped retry because task lock ownership changed.',
+          )
+        }
+
+        continue
+      }
+
+      const taskData = task.data
 
       switch (taskData.type) {
         case 'notification':
@@ -312,5 +356,6 @@ export const queueConsumeCommand = async (limit?: number) => {
     }
   } catch (error) {
     logger.error({ error }, 'Error while processing the queue')
+    throw error
   }
 }

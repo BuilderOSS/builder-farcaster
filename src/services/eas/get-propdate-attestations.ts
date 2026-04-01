@@ -85,7 +85,7 @@ export const getPropdateAttestations = async (): Promise<Result> => {
 
     for (const { chain, endpoint } of propdateChainEndpoints) {
       const client = new GraphQLClient(endpoint)
-      const updates: Data['proposalUpdates'] = []
+      const chainPropdates: Propdate[] = []
       let skip = 0
       let hasMore = true
 
@@ -100,37 +100,38 @@ export const getPropdateAttestations = async (): Promise<Result> => {
           `get-propdates chain=${chain.name} skip=${skip.toString()}`,
         )
 
-        updates.push(...response.proposalUpdates)
+        const pagePropdates = await Promise.all(
+          response.proposalUpdates.map(async (update) => {
+            const propdateObject = await convertPropdateToObject(
+              update.messageType,
+              update.message,
+              update.proposal.proposalId,
+              update.originalMessageId,
+            )
+
+            return {
+              ...propdateObject,
+              chain,
+              id: update.id,
+              recipient: update.proposal.dao.tokenAddress,
+              timeCreated: Number(update.timestamp),
+            }
+          }),
+        )
+
+        chainPropdates.push(
+          ...pagePropdates.filter(
+            (propdate) =>
+              propdate.proposalId !== zeroHash &&
+              propdate.originalMessageId === zeroHash,
+          ),
+        )
+
         hasMore = response.proposalUpdates.length === pageSize
         skip += response.proposalUpdates.length
       }
 
-      const propdates = await Promise.all(
-        updates.map(async (update) => {
-          const propdateObject = await convertPropdateToObject(
-            update.messageType,
-            update.message,
-            update.proposal.proposalId,
-            update.originalMessageId,
-          )
-
-          return {
-            ...propdateObject,
-            chain,
-            id: update.id,
-            recipient: update.proposal.dao.tokenAddress,
-            timeCreated: Number(update.timestamp),
-          }
-        }),
-      )
-
-      perChainPropdates.push(
-        propdates.filter(
-          (propdate) =>
-            propdate.proposalId !== zeroHash &&
-            propdate.originalMessageId === zeroHash,
-        ),
-      )
+      perChainPropdates.push(chainPropdates)
     }
 
     const propdates = pipe(

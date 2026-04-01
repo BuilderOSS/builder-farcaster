@@ -6,7 +6,6 @@ import { getActiveProposals } from '@/services/builder/get-active-proposals'
 import { Proposal } from '@/services/builder/types'
 import { TargetingOptions } from '@/services/testing/targeting'
 import { DateTime } from 'luxon'
-import { filter } from 'remeda'
 import { JsonValue } from 'type-fest'
 
 interface ProposalTargetInput {
@@ -52,15 +51,21 @@ function matchesProposalTargets(
 ): boolean {
   const daoId = proposal.dao.id.toLowerCase()
   const chainName = proposal.dao.chain.name.toLowerCase()
+  const targetDaoIdsSet = options.targetDaoIds
+    ? new Set(options.targetDaoIds.map((value) => value.toLowerCase()))
+    : undefined
+  const targetChainsSet = options.targetChains
+    ? new Set(options.targetChains.map((value) => value.toLowerCase()))
+    : undefined
 
-  if (options.targetDaoIds && options.targetDaoIds.length > 0) {
-    if (!options.targetDaoIds.includes(daoId)) {
+  if (targetDaoIdsSet && targetDaoIdsSet.size > 0) {
+    if (!targetDaoIdsSet.has(daoId)) {
       return false
     }
   }
 
-  if (options.targetChains && options.targetChains.length > 0) {
-    if (!options.targetChains.includes(chainName)) {
+  if (targetChainsSet && targetChainsSet.size > 0) {
+    if (!targetChainsSet.has(chainName)) {
       return false
     }
   }
@@ -190,7 +195,7 @@ export async function processProposalsCommand(options: TargetingOptions = {}) {
       'Active proposals retrieved.',
     )
 
-    const filteredProposals = filter(activeProposals, (proposal) =>
+    const filteredProposals = activeProposals.filter((proposal) =>
       matchesProposalTargets(proposal, options),
     )
 

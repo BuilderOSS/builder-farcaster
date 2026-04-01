@@ -72,6 +72,8 @@ export const getDAOsForOwners = async (
       owners: daotokenOwners(
         skip: $skip
         first: $first
+        orderBy: id
+        orderDirection: asc
         where: { owner_in: $ownerAddresses }
       ) {
         id

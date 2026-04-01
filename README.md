@@ -128,7 +128,7 @@ This repository contains the source code for the @builderbot Farcaster bot.
 The bot is built with:
 
 - **Runtime Model**: Vercel serverless cron handlers in `api/cron/*` orchestrate producers, consumer, and cleanup in production
-- **CLI Interface**: Commander.js powers local development and manual operational commands
+- **CLI**: Commander.js powers local development and manual operational commands
 - **Queue System**: Postgres-backed task queue with retry/backoff logic
 - **Multi-chain Integration**: GraphQL queries to Builder subgraphs
 - **Farcaster Integration**: Farcaster client API for sending direct casts
