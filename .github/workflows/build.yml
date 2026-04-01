@@ -59,7 +59,7 @@ jobs:
       - name: Build the application and export it
         run: pnpm run build
 
-      # Runs unit tests for the application using Jest.
+      # Runs unit tests for the application using Vitest.
       - name: Execute tests using Vitest
         run: pnpm exec vitest run --passWithNoTests
 

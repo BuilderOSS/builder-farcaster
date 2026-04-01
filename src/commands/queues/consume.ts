@@ -28,22 +28,101 @@ interface InvitationData {
 }
 
 /**
+ * Checks whether a value is a non-null object record.
+ * @param value - Unknown value.
+ * @returns True when value is an object.
+ */
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null
+}
+
+/**
  * Checks whether a raw queue payload matches expected task shape.
  * @param value - Raw queue task data.
  * @returns True when payload contains a supported task type.
  */
 function isTaskData(value: unknown): value is TaskData {
-  if (typeof value !== 'object' || value === null) {
+  if (!isRecord(value)) {
     return false
   }
 
-  const maybeTask = value as { type?: unknown }
+  const maybeTask = value
 
   if (typeof maybeTask.type !== 'string' || maybeTask.type.length === 0) {
     return false
   }
 
-  return maybeTask.type === 'notification' || maybeTask.type === 'invitation'
+  if (
+    typeof maybeTask.recipient !== 'number' ||
+    !Number.isFinite(maybeTask.recipient)
+  ) {
+    return false
+  }
+
+  if (maybeTask.type === 'invitation') {
+    return Array.isArray(maybeTask.daos)
+  }
+
+  if (maybeTask.type !== 'notification') {
+    return false
+  }
+
+  if (!isRecord(maybeTask.proposal)) {
+    return false
+  }
+
+  const proposal = maybeTask.proposal
+
+  if (
+    typeof proposal.title !== 'string' ||
+    typeof proposal.proposalNumber !== 'number' ||
+    typeof proposal.timeCreated !== 'string' ||
+    typeof proposal.voteStart !== 'string' ||
+    typeof proposal.voteEnd !== 'string'
+  ) {
+    return false
+  }
+
+  if (!isRecord(proposal.dao)) {
+    return false
+  }
+
+  if (
+    typeof proposal.dao.id !== 'string' ||
+    typeof proposal.dao.name !== 'string'
+  ) {
+    return false
+  }
+
+  if (!isRecord(proposal.dao.chain)) {
+    return false
+  }
+
+  if (typeof proposal.dao.chain.name !== 'string') {
+    return false
+  }
+
+  if (maybeTask.propdate !== undefined) {
+    if (!isRecord(maybeTask.propdate)) {
+      return false
+    }
+
+    const propdate = maybeTask.propdate
+
+    if (!isRecord(propdate.chain) || !isRecord(propdate.parsedMessage)) {
+      return false
+    }
+
+    if (
+      typeof propdate.chain.name !== 'string' ||
+      typeof propdate.parsedMessage.content !== 'string' ||
+      typeof propdate.timeCreated !== 'number'
+    ) {
+      return false
+    }
+  }
+
+  return true
 }
 
 /**
@@ -283,10 +362,15 @@ export const queueConsumeCommand = async (limit?: number) => {
       let handledSuccessfully = false
 
       if (!isTaskData(task.data)) {
+        const malformedType =
+          typeof (task.data as { type?: unknown }).type === 'string'
+            ? (task.data as { type: string }).type
+            : 'unknown'
+
         logger.error(
           {
-            taskData: task.data,
             taskId: task.taskId,
+            taskType: malformedType,
           },
           'Malformed task payload. Expected supported task schema.',
         )

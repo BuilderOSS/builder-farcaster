@@ -1,12 +1,16 @@
 import { chainEndpoints } from '@/services/builder/index'
 import { runBuilderRequestWithRetry } from '@/services/builder/request'
-import { Dao, Env, Owner } from '@/services/builder/types'
+import { Dao, Env } from '@/services/builder/types'
 import { gql, GraphQLClient } from 'graphql-request'
-import { pipe, uniqueBy } from 'remeda'
 import { JsonObject } from 'type-fest'
 
+interface GraphOwner {
+  owner: string
+  dao: Omit<Dao, 'chain'>
+}
+
 type Data = {
-  owners: Owner[]
+  owners: GraphOwner[]
 } & JsonObject
 
 interface Result {
@@ -89,7 +93,12 @@ export const getDAOsForOwners = async (
   `
 
   try {
-    const allOwners: Owner[] = []
+    const ownerDaoSetMap = new Map<string, Set<string>>()
+    const daoMap = new Map<string, Dao>()
+
+    for (const ownerAddress of normalizedAddresses) {
+      ownerDaoSetMap.set(ownerAddress, new Set())
+    }
 
     for (const { chain, endpoint } of chainEndpoints) {
       const client = new GraphQLClient(endpoint)
@@ -110,16 +119,21 @@ export const getDAOsForOwners = async (
             `get-daos-for-owners chain=${chain.name} chunkSize=${String(ownerChunk.length)} skip=${String(skip)}`,
           )
 
-          allOwners.push(
-            ...response.owners.map((owner) => ({
-              ...owner,
-              owner: owner.owner.toLowerCase(),
-              dao: {
-                ...owner.dao,
-                chain,
-              },
-            })),
-          )
+          for (const owner of response.owners) {
+            const ownerAddress = owner.owner.toLowerCase()
+            const dao: Dao = {
+              ...owner.dao,
+              chain,
+            }
+            const daoKey = getDaoChainKey(dao)
+
+            daoMap.set(daoKey, dao)
+
+            const ownerSet = ownerDaoSetMap.get(ownerAddress)
+            if (ownerSet) {
+              ownerSet.add(daoKey)
+            }
+          }
 
           hasMore = response.owners.length === SUBGRAPH_PAGE_SIZE
           skip += response.owners.length
@@ -127,19 +141,13 @@ export const getDAOsForOwners = async (
       }
     }
 
-    const uniqueDaos = pipe(
-      allOwners.map((owner) => owner.dao),
-      uniqueBy((dao) => getDaoChainKey(dao)),
-    )
+    const uniqueDaos = [...daoMap.values()]
 
     const ownerDaoIdsMap: Record<string, string[]> = {}
-    for (const owner of allOwners) {
-      const ownerAddress = owner.owner.toLowerCase()
-      const daoKey = getDaoChainKey(owner.dao)
-      ownerDaoIdsMap[ownerAddress] ??= []
-      if (!ownerDaoIdsMap[ownerAddress].includes(daoKey)) {
-        ownerDaoIdsMap[ownerAddress].push(daoKey)
-      }
+    for (const ownerAddress of normalizedAddresses) {
+      ownerDaoIdsMap[ownerAddress] = [
+        ...(ownerDaoSetMap.get(ownerAddress) ?? new Set<string>()),
+      ]
     }
 
     return { daos: uniqueDaos, ownerDaoIdsMap }

@@ -9,6 +9,7 @@ import { propdateChainEndpoints } from '@/services/eas'
 import { fetchFromURL } from '@/services/eas/ipfs'
 import { gql, GraphQLClient } from 'graphql-request'
 import { DateTime } from 'luxon'
+import pLimit from 'p-limit'
 import { flatMap, pipe } from 'remeda'
 import { Hex, zeroHash } from 'viem'
 
@@ -36,6 +37,8 @@ interface Result {
 
 export const getPropdateAttestations = async (): Promise<Result> => {
   try {
+    const limit = pLimit(10)
+
     const oneDayAgoInSeconds = Math.floor(
       DateTime.now().minus({ hours: 24 }).toSeconds(),
     )
@@ -102,11 +105,13 @@ export const getPropdateAttestations = async (): Promise<Result> => {
 
         const pagePropdates = await Promise.all(
           response.proposalUpdates.map(async (update) => {
-            const propdateObject = await convertPropdateToObject(
-              update.messageType,
-              update.message,
-              update.proposal.proposalId,
-              update.originalMessageId,
+            const propdateObject = await limit(() =>
+              convertPropdateToObject(
+                update.messageType,
+                update.message,
+                update.proposal.proposalId,
+                update.originalMessageId,
+              ),
             )
 
             return {
@@ -121,9 +126,7 @@ export const getPropdateAttestations = async (): Promise<Result> => {
 
         chainPropdates.push(
           ...pagePropdates.filter(
-            (propdate) =>
-              propdate.proposalId !== zeroHash &&
-              propdate.originalMessageId === zeroHash,
+            (propdate) => propdate.proposalId !== zeroHash,
           ),
         )
 

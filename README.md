@@ -94,7 +94,7 @@ This repository contains the source code for the @builderbot Farcaster bot.
    - `NEXT_PUBLIC_NETWORK_TYPE` (optional) - allowed values: `mainnet` or `testnet`; if unset, @buildeross packages default to mainnet
    - `DATABASE_URL` - Postgres pooled connection string
    - `DIRECT_URL` - Postgres direct connection string for Prisma migrations
-   - `CRON_SECRET` - Shared secret for cron endpoint auth
+   - `CRON_SECRET` - Shared secret for cron endpoint auth (only needed when testing cron HTTP endpoints locally or on Vercel)
 
 4. Initialize the database:
 
