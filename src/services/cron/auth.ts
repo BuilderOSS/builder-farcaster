@@ -1,3 +1,5 @@
+import { env } from '@/config'
+
 /**
  * Validates whether an incoming request was sent by Vercel Cron.
  * @param authorizationHeader - Incoming authorization header value.
@@ -6,7 +8,7 @@
 export function isAuthorizedCronRequest(
   authorizationHeader: string | undefined,
 ): boolean {
-  const secret = process.env.CRON_SECRET
+  const secret = env.CRON_SECRET
 
   if (!secret) {
     return false

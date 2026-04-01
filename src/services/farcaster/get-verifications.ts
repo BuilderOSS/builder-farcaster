@@ -1,5 +1,9 @@
 import { logger } from '@/logger'
-import { fetchRequest, HttpRequestMethod } from '@/services/farcaster/index'
+import {
+  fetchRequest,
+  HttpRequestMethod,
+  runFarcasterRequestWithRetry,
+} from '@/services/farcaster/index'
 import { Env, Verification } from '@/services/farcaster/types'
 import { NonNegative } from 'type-fest'
 
@@ -37,18 +41,22 @@ export const getVerifications = async (
       break
     }
 
-    response = await fetchRequest<Response>(
-      baseUrl,
-      undefined,
-      HttpRequestMethod.GET,
-      '/v2/verifications',
-      {
-        params: {
-          fid: fid.toString(),
-          cursor: currentCursor,
-          limit: limit.toString(),
-        },
-      },
+    response = await runFarcasterRequestWithRetry(
+      async () =>
+        fetchRequest<Response>(
+          baseUrl,
+          undefined,
+          HttpRequestMethod.GET,
+          '/v2/verifications',
+          {
+            params: {
+              fid: fid.toString(),
+              cursor: currentCursor,
+              limit: limit.toString(),
+            },
+          },
+        ),
+      `get-verifications fid=${fid.toString()} cursor=${currentCursor || 'start'}`,
     )
 
     verifications.push(...response.result.verifications)

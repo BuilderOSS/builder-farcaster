@@ -1,37 +1,11 @@
+import { env } from '@/config'
 import { prisma } from '@/db'
+import { isAuthorizedCronRequest } from '@/services/cron/auth'
 
-/**
- * Parses a non-negative integer environment variable with fallback.
- * @param name - Environment variable name.
- * @param fallback - Default value when unset/invalid.
- * @returns Parsed non-negative integer.
- */
-function parseNonNegativeIntEnv(name: string, fallback: number): number {
-  const raw = process.env[name]
-  if (!raw) {
-    return fallback
-  }
-
-  const parsed = Number.parseInt(raw, 10)
-  if (!Number.isFinite(parsed) || parsed < 0) {
-    return fallback
-  }
-
-  return parsed
-}
-
-const PENDING_WARNING_THRESHOLD = parseNonNegativeIntEnv(
-  'PENDING_WARNING_THRESHOLD',
-  500,
-)
-const PENDING_AGE_WARNING_MINUTES = parseNonNegativeIntEnv(
-  'PENDING_AGE_WARNING_MINUTES',
-  30,
-)
-const PROCESSING_STALE_WARNING_MINUTES = parseNonNegativeIntEnv(
-  'PROCESSING_STALE_WARNING_MINUTES',
-  20,
-)
+const PENDING_WARNING_THRESHOLD = env.PENDING_WARNING_THRESHOLD ?? 500
+const PENDING_AGE_WARNING_MINUTES = env.PENDING_AGE_WARNING_MINUTES ?? 30
+const PROCESSING_STALE_WARNING_MINUTES =
+  env.PROCESSING_STALE_WARNING_MINUTES ?? 20
 
 export const config = {
   runtime: 'nodejs',
@@ -39,6 +13,9 @@ export const config = {
 
 interface ApiRequest {
   method?: string
+  headers: {
+    authorization?: string
+  }
 }
 
 interface ApiResponse {
@@ -55,6 +32,18 @@ interface ApiResponse {
 export default async function handler(req: ApiRequest, res: ApiResponse) {
   if (req.method !== 'GET') {
     res.status(405).json({ error: 'Method not allowed' })
+    return
+  }
+
+  const isAuthorized = isAuthorizedCronRequest(req.headers.authorization)
+
+  if (!isAuthorized) {
+    res.status(200).json({
+      ok: true,
+      service: 'builder-farcaster',
+      now: new Date().toISOString(),
+      visibility: 'public',
+    })
     return
   }
 

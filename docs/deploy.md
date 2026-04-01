@@ -61,10 +61,13 @@ pnpm prisma:migrate
 
 After deployment:
 
-1. Check health endpoint: `GET /api/health`
+1. Check health endpoint with cron auth: `GET /api/health`
 2. Manually hit one cron endpoint with auth header:
 
 ```bash
+curl -H "Authorization: Bearer <CRON_SECRET>" \
+  "https://<your-app-domain>/api/health"
+
 curl -H "Authorization: Bearer <CRON_SECRET>" \
   "https://<your-app-domain>/api/cron/process-proposals?dryRun=true"
 ```

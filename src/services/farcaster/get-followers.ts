@@ -1,4 +1,8 @@
-import { fetchRequest, HttpRequestMethod } from '@/services/farcaster/index'
+import {
+  fetchRequest,
+  HttpRequestMethod,
+  runFarcasterRequestWithRetry,
+} from '@/services/farcaster/index'
 import { Env, User } from '@/services/farcaster/types'
 
 interface Result {
@@ -23,7 +27,7 @@ interface Response {
 export const getFollowers = async (env: Env, fid: number): Promise<Result> => {
   const { FARCASTER_API_BASE_URL: baseUrl } = env
   let newCursor = ''
-  let users: User[] = []
+  const users: User[] = []
   let response: Response
 
   do {
@@ -32,16 +36,20 @@ export const getFollowers = async (env: Env, fid: number): Promise<Result> => {
       cursor: newCursor,
       limit: '50',
     }
-    response = await fetchRequest<Response>(
-      baseUrl,
-      undefined,
-      HttpRequestMethod.GET,
-      '/v2/followers',
-      {
-        params,
-      },
+    response = await runFarcasterRequestWithRetry(
+      async () =>
+        fetchRequest<Response>(
+          baseUrl,
+          undefined,
+          HttpRequestMethod.GET,
+          '/v2/followers',
+          {
+            params,
+          },
+        ),
+      `get-followers fid=${fid.toString()} cursor=${newCursor || 'start'}`,
     )
-    users = [...users, ...response.result.users]
+    users.push(...response.result.users)
     newCursor = response.next ? response.next.cursor : ''
   } while (response.next)
 

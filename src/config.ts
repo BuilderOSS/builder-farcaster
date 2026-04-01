@@ -22,11 +22,35 @@ const envSchema = z.object({
     .optional(),
   ENABLE_TESTNET_CHAINS: z.string().optional(),
   NO_SEND_NOTIFICATIONS: z.string().optional(),
+  TEST_TARGET_FIDS: z.string().optional(),
+  TEST_TARGET_DAO_IDS: z.string().optional(),
+  TEST_TARGET_CHAINS: z.string().optional(),
+  TEST_DRY_RUN: z.string().optional(),
+  PENDING_WARNING_THRESHOLD: z.coerce.number().int().nonnegative().optional(),
+  PENDING_AGE_WARNING_MINUTES: z.coerce.number().int().nonnegative().optional(),
+  PROCESSING_STALE_WARNING_MINUTES: z.coerce
+    .number()
+    .int()
+    .nonnegative()
+    .optional(),
   NODE_ENV: z.enum(['development', 'production', 'test']),
 })
 
+/**
+ * Ensures environment variable cross-field constraints.
+ */
+const validatedEnvSchema = envSchema.superRefine((value, context) => {
+  if (value.NODE_ENV === 'production' && !value.CRON_SECRET) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'CRON_SECRET is required in production',
+      path: ['CRON_SECRET'],
+    })
+  }
+})
+
 // Parse and validate the environment variables
-const parsedEnv = envSchema.parse(process.env)
+const parsedEnv = validatedEnvSchema.parse(process.env)
 
 // Cast the parsed result to `Env` to retain type safety
 export const env: Env = parsedEnv as Env

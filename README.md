@@ -58,7 +58,7 @@ This repository contains the source code for the @builderbot Farcaster bot.
 
 ### Prerequisites
 
-- Node.js 18+
+- Node.js 20+
 - pnpm
 - Farcaster API credentials
 - Postgres database (Neon recommended)
@@ -154,10 +154,11 @@ Production deployment is optimized for Vercel + Neon Postgres:
    pnpm prisma:migrate
    ```
 
-3. Verify health endpoint:
+3. Verify health endpoint (detailed metrics require cron auth):
 
    ```bash
-   curl https://<your-app-domain>/api/health
+   curl -H "Authorization: Bearer <CRON_SECRET>" \
+     https://<your-app-domain>/api/health
    ```
 
 4. Enable Vercel cron schedules.
@@ -179,6 +180,8 @@ Invite processing is intentionally disabled pending app-key auth validation.
 ### Runtime Health
 
 - Health endpoint: `GET /api/health`
+- Public requests return a minimal heartbeat payload only
+- Detailed queue metrics require `Authorization: Bearer <CRON_SECRET>`
 - Includes queue depth metrics (`pending`, `processing`, `failed`, `completedLast24h`)
 - Includes warning checks for high backlog and stale processing locks
 

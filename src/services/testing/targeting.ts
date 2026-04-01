@@ -1,3 +1,5 @@
+import { env } from '@/config'
+
 export interface TargetingOptions {
   targetFids?: number[]
   targetDaoIds?: string[]
@@ -93,12 +95,10 @@ function normalizeChains(values: string[]): string[] {
  * @returns Parsed targeting options for test runs.
  */
 export function getTargetingOptionsFromEnv(): TargetingOptions {
-  const targetFids = parseFids(process.env.TEST_TARGET_FIDS)
-  const targetDaoIds = normalizeDaoIds(
-    parseCsv(process.env.TEST_TARGET_DAO_IDS),
-  )
-  const targetChains = normalizeChains(parseCsv(process.env.TEST_TARGET_CHAINS))
-  const dryRun = parseBoolean(process.env.TEST_DRY_RUN)
+  const targetFids = parseFids(env.TEST_TARGET_FIDS)
+  const targetDaoIds = normalizeDaoIds(parseCsv(env.TEST_TARGET_DAO_IDS))
+  const targetChains = normalizeChains(parseCsv(env.TEST_TARGET_CHAINS))
+  const dryRun = parseBoolean(env.TEST_DRY_RUN)
 
   return {
     ...(targetFids.length > 0 && { targetFids }),
