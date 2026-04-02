@@ -1,12 +1,12 @@
 import { DateTime } from 'luxon'
 import { JsonValue } from 'type-fest'
-import { getFollowerFids, getFollowersDaoMap, getUserFid } from '..'
-import { getCache, setCache } from '../../cache'
-import { logger } from '../../logger'
-import { addToQueue } from '../../queue'
-import { getActiveProposals } from '../../services/builder/get-active-proposals'
-import { Proposal } from '../../services/builder/types'
-import { TargetingOptions } from '../../services/testing/targeting'
+import { getCache, setCache } from '../../cache.js'
+import { logger } from '../../logger.js'
+import { addToQueue } from '../../queue.js'
+import { getActiveProposals } from '../../services/builder/get-active-proposals.js'
+import { Proposal } from '../../services/builder/types.js'
+import { TargetingOptions } from '../../services/testing/targeting.js'
+import { getFollowerFids, getFollowersDaoMap, getUserFid } from '../index.js'
 
 interface ProposalTargetInput {
   dao: {

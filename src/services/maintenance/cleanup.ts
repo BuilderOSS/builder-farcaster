@@ -1,4 +1,4 @@
-import { prisma } from '../../db'
+import { prisma } from '../../db.js'
 
 const CACHE_RETENTION_DAYS = 3
 const COMPLETED_QUEUE_RETENTION_DAYS = 30

@@ -1,15 +1,15 @@
 import { randomUUID } from 'node:crypto'
-import { processProposalsCommand } from '../../src/commands/process/proposals'
-import { isAuthorizedCronRequest } from '../../src/services/cron/auth'
+import { processProposalsCommand } from '../../src/commands/process/proposals.js'
+import { isAuthorizedCronRequest } from '../../src/services/cron/auth.js'
 import {
   acquireJobLock,
   releaseJobLock,
-} from '../../src/services/locks/job-lock'
+} from '../../src/services/locks/job-lock.js'
 import {
   getTargetingOptionsFromEnv,
   getTargetingOptionsFromQuery,
   mergeTargetingOptions,
-} from '../../src/services/testing/targeting'
+} from '../../src/services/testing/targeting.js'
 
 const LOCK_NAME = 'process-proposals'
 const LOCK_TTL_MS = 50 * 60 * 1000

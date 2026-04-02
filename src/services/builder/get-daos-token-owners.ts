@@ -1,7 +1,7 @@
 import { gql, GraphQLClient } from 'graphql-request'
 import { JsonObject } from 'type-fest'
-import { chainEndpoints } from './index'
-import { Env, Owner } from './types'
+import { chainEndpoints } from './index.js'
+import { Env, Owner } from './types.js'
 
 type Data = {
   owners: Owner[] | null

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { processUpdates } from './propdates'
+import { processUpdates } from './propdates.js'
 
 const {
   addToQueueMock,

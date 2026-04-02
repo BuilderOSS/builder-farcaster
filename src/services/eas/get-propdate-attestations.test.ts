@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { MessageType } from '../builder/types'
-import { getPropdateAttestations } from './get-propdate-attestations'
+import { MessageType } from '../builder/types.js'
+import { getPropdateAttestations } from './get-propdate-attestations.js'
 
 const { fetchFromURLMock, runBuilderRequestWithRetryMock } = vi.hoisted(() => ({
   fetchFromURLMock: vi.fn(),

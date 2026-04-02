@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import handler from './health'
+import handler from './health.js'
 
 const { isAuthorizedCronRequestMock } = vi.hoisted(() => ({
   isAuthorizedCronRequestMock: vi.fn(),

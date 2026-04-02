@@ -1,8 +1,8 @@
 import { gql, GraphQLClient } from 'graphql-request'
 import { JsonObject } from 'type-fest'
-import { chainEndpoints } from './index'
-import { runBuilderRequestWithRetry } from './request'
-import { Dao, Env } from './types'
+import { chainEndpoints } from './index.js'
+import { runBuilderRequestWithRetry } from './request.js'
+import { Dao, Env } from './types.js'
 
 interface GraphOwner {
   owner: string

@@ -39,10 +39,10 @@ vi.mock('../../services/farcaster/send-direct-cast', () => ({
   sendDirectCast: sendDirectCastMock,
 }))
 
-let queueConsumeCommand: typeof import('./consume').queueConsumeCommand
+let queueConsumeCommand: typeof import('./consume.js').queueConsumeCommand
 
 beforeAll(async () => {
-  const consumeModule = await import('./consume')
+  const consumeModule = await import('./consume.js')
   queueConsumeCommand = consumeModule.queueConsumeCommand
 })
 
