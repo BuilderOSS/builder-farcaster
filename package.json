@@ -1,6 +1,6 @@
 {
   "name": "builder-farcaster",
-  "version": "2.0.4",
+  "version": "2.0.5",
   "description": "Tools and automation solutions for Builder DAO on Farcaster, enhancing community efficiency and engagement.",
   "type": "module",
   "scripts": {
@@ -87,7 +87,7 @@
   },
   "packageManager": "pnpm@10.12.1",
   "engines": {
-    "node": ">=20.0.0",
+    "node": ">=22.0.0",
     "pnpm": ">=10.0.0"
   }
 }

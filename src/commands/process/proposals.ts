@@ -196,6 +196,13 @@ export async function processProposalsCommand(options: TargetingOptions = {}) {
       matchesProposalTargets(proposal, options),
     )
 
+    if (filteredProposals.length === 0) {
+      logger.info(
+        'No proposals matched targeting filters, terminating execution.',
+      )
+      return
+    }
+
     const currentUnixTimestamp = DateTime.now().toSeconds()
     const { endingProposals, votingProposals } = splitProposalBuckets(
       filteredProposals,
