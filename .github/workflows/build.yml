@@ -55,6 +55,10 @@ jobs:
       - name: Install dependencies using pnpm
         run: pnpm install --frozen-lockfile
 
+      # Validates runtime-safe imports for Vercel Node ESM functions.
+      - name: Audit runtime imports
+        run: pnpm run lint:imports
+
       # Build CLI artifact used for local/manual runs.
       - name: Build CLI artifact
         run: pnpm run build
