@@ -1,4 +1,4 @@
-import { isAuthorizedCronRequest } from '@/services/cron/auth'
+import { isAuthorizedCronRequest } from '../../src/services/cron/auth'
 
 export const config = {
   runtime: 'nodejs',

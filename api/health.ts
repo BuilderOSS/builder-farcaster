@@ -1,6 +1,6 @@
-import { env } from '@/config'
-import { prisma } from '@/db'
-import { isAuthorizedCronRequest } from '@/services/cron/auth'
+import { env } from '../src/config'
+import { prisma } from '../src/db'
+import { isAuthorizedCronRequest } from '../src/services/cron/auth'
 
 const PENDING_WARNING_THRESHOLD = env.PENDING_WARNING_THRESHOLD ?? 500
 const PENDING_AGE_WARNING_MINUTES = env.PENDING_AGE_WARNING_MINUTES ?? 30

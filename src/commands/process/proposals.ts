@@ -137,10 +137,7 @@ async function notifyFollowersForProposals(
     }
 
     const cacheKey = `${cacheKeyPrefix}_${follower.toString()}`
-    let notifiedProposals = await getCache<string[]>(cacheKey)
-    if (!notifiedProposals) {
-      notifiedProposals = []
-    }
+    const notifiedProposals = (await getCache<string[]>(cacheKey)) ?? []
 
     const notifiedProposalsSet = new Set(notifiedProposals)
 
