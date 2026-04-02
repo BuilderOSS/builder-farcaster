@@ -1,6 +1,6 @@
 {
   "name": "builder-farcaster",
-  "version": "2.0.3",
+  "version": "2.0.4",
   "description": "Tools and automation solutions for Builder DAO on Farcaster, enhancing community efficiency and engagement.",
   "type": "module",
   "scripts": {
@@ -17,6 +17,7 @@
     "dev:tokengen": "node dist/index.js farcaster token",
     "generate:prisma": "pnpm prisma:generate",
     "lint": "eslint",
+    "lint:imports": "node scripts/audit-runtime-imports.js",
     "prepare": "husky || :",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate deploy",
