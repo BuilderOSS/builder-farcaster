@@ -1,12 +1,15 @@
-import { processUpdates } from '@/commands/process/propdates'
-import { isAuthorizedCronRequest } from '@/services/cron/auth'
-import { acquireJobLock, releaseJobLock } from '@/services/locks/job-lock'
+import { randomUUID } from 'node:crypto'
+import { processUpdates } from '../../src/commands/process/propdates'
+import { isAuthorizedCronRequest } from '../../src/services/cron/auth'
+import {
+  acquireJobLock,
+  releaseJobLock,
+} from '../../src/services/locks/job-lock'
 import {
   getTargetingOptionsFromEnv,
   getTargetingOptionsFromQuery,
   mergeTargetingOptions,
-} from '@/services/testing/targeting'
-import { randomUUID } from 'node:crypto'
+} from '../../src/services/testing/targeting'
 
 const LOCK_NAME = 'process-propdates'
 const LOCK_TTL_MS = 50 * 60 * 1000

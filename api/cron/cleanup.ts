@@ -1,5 +1,5 @@
-import { isAuthorizedCronRequest } from '@/services/cron/auth'
-import { cleanupDatabase } from '@/services/maintenance/cleanup'
+import { isAuthorizedCronRequest } from '../../src/services/cron/auth'
+import { cleanupDatabase } from '../../src/services/maintenance/cleanup'
 
 export const config = {
   runtime: 'nodejs',
