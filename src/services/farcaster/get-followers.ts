@@ -1,10 +1,10 @@
-import { logger } from '../../logger'
+import { logger } from '../../logger.js'
 import {
   fetchRequest,
   HttpRequestMethod,
   runFarcasterRequestWithRetry,
-} from './index'
-import { Env, User } from './types'
+} from './index.js'
+import { Env, User } from './types.js'
 
 const MAX_PAGES = 100
 

@@ -1,6 +1,6 @@
 import { DateTime } from 'luxon'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { processProposalsCommand } from './proposals'
+import { processProposalsCommand } from './proposals.js'
 
 const {
   addToQueueMock,

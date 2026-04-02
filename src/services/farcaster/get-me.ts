@@ -1,6 +1,6 @@
-import { getFarcasterAuthToken } from './auth'
-import { fetchRequest, HttpRequestMethod } from './index'
-import { Env, User } from './types'
+import { getFarcasterAuthToken } from './auth.js'
+import { fetchRequest, HttpRequestMethod } from './index.js'
+import { Env, User } from './types.js'
 
 interface Result {
   user: User

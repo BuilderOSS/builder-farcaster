@@ -1,8 +1,8 @@
 import { PUBLIC_SUBGRAPH_URL } from '@buildeross/constants'
 import { CHAIN_ID } from '@buildeross/types'
-import { env } from '../../config'
-import { parseBooleanEnv } from '../../flags'
-import { Chain } from './types'
+import { env } from '../../config.js'
+import { parseBooleanEnv } from '../../flags.js'
+import { Chain } from './types.js'
 
 const allChains: Chain[] = [
   {

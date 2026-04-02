@@ -1,6 +1,6 @@
 import dotenv from 'dotenv'
 import { z } from 'zod'
-import { Env } from './types' // Import Env type
+import { Env } from './types.js' // Import Env type
 
 dotenv.config()
 

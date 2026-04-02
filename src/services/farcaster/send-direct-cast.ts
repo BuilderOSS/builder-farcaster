@@ -1,5 +1,5 @@
-import { fetchRequest, HttpRequestMethod } from './index'
-import { Env } from './types'
+import { fetchRequest, HttpRequestMethod } from './index.js'
+import { Env } from './types.js'
 
 interface Result {
   success: boolean

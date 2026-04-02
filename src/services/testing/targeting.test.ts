@@ -14,11 +14,11 @@ vi.mock('../../config', () => ({
   env: envMock,
 }))
 
-let getTargetingOptionsFromQuery: typeof import('./targeting').getTargetingOptionsFromQuery
-let mergeTargetingOptions: typeof import('./targeting').mergeTargetingOptions
+let getTargetingOptionsFromQuery: typeof import('./targeting.js').getTargetingOptionsFromQuery
+let mergeTargetingOptions: typeof import('./targeting.js').mergeTargetingOptions
 
 beforeAll(async () => {
-  const targetingModule = await import('./targeting')
+  const targetingModule = await import('./targeting.js')
   getTargetingOptionsFromQuery = targetingModule.getTargetingOptionsFromQuery
   mergeTargetingOptions = targetingModule.mergeTargetingOptions
 })

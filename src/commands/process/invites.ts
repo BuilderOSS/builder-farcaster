@@ -11,16 +11,16 @@ import {
   unique,
 } from 'remeda'
 import { JsonValue } from 'type-fest'
-import { CACHE_MAX_AGE_MS, getFollowerFids, getUserFid } from '..'
-import { getCache, setCache } from '../../cache'
-import { env } from '../../config'
-import { logger } from '../../logger'
-import { addToQueue } from '../../queue'
-import { getDAOsTokenOwners } from '../../services/builder/get-daos-token-owners'
-import type { Dao, Owner } from '../../services/builder/types'
-import { getUserByVerification } from '../../services/farcaster/get-user-by-verification'
-import type { EnvWithAppKeys } from '../../services/farcaster/types'
-import { TargetingOptions } from '../../services/testing/targeting'
+import { getCache, setCache } from '../../cache.js'
+import { env } from '../../config.js'
+import { logger } from '../../logger.js'
+import { addToQueue } from '../../queue.js'
+import { getDAOsTokenOwners } from '../../services/builder/get-daos-token-owners.js'
+import type { Dao, Owner } from '../../services/builder/types.js'
+import { getUserByVerification } from '../../services/farcaster/get-user-by-verification.js'
+import type { EnvWithAppKeys } from '../../services/farcaster/types.js'
+import { TargetingOptions } from '../../services/testing/targeting.js'
+import { CACHE_MAX_AGE_MS, getFollowerFids, getUserFid } from '../index.js'
 
 /**
  * Type guard for env objects that include required app-key auth fields.

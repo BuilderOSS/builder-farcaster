@@ -1,5 +1,5 @@
-import type { Env as BuilderEnv } from './services/builder/types'
-import type { Env as FarcasterEnv } from './services/farcaster/types'
+import type { Env as BuilderEnv } from './services/builder/types.js'
+import type { Env as FarcasterEnv } from './services/farcaster/types.js'
 
 export type Env = BuilderEnv &
   FarcasterEnv & {

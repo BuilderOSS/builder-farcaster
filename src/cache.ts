@@ -1,4 +1,4 @@
-import { prisma } from './db'
+import { prisma } from './db.js'
 
 /**
  * Stores the provided value in the cache with the specified key.

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { getFollowers } from './get-followers'
+import { getFollowers } from './get-followers.js'
 
 const { fetchRequestMock, runFarcasterRequestWithRetryMock } = vi.hoisted(
   () => ({

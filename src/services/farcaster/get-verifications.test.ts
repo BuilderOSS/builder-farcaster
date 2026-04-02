@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { getVerifications } from './get-verifications'
+import { getVerifications } from './get-verifications.js'
 
 const { fetchRequestMock, runFarcasterRequestWithRetryMock } = vi.hoisted(
   () => ({

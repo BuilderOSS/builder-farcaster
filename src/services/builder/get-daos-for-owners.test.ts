@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { getDAOsForOwners } from './get-daos-for-owners'
+import { getDAOsForOwners } from './get-daos-for-owners.js'
 
 const { runBuilderRequestWithRetryMock } = vi.hoisted(() => ({
   runBuilderRequestWithRetryMock: vi.fn(),

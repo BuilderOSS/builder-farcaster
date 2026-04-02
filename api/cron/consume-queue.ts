@@ -1,5 +1,5 @@
-import { queueConsumeCommand } from '../../src/commands/queues/consume'
-import { isAuthorizedCronRequest } from '../../src/services/cron/auth'
+import { queueConsumeCommand } from '../../src/commands/queues/consume.js'
+import { isAuthorizedCronRequest } from '../../src/services/cron/auth.js'
 
 export const config = {
   runtime: 'nodejs',

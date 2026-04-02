@@ -3,8 +3,11 @@ import { getPublicKeyAsync, utils } from '@noble/ed25519'
 import qrcode from 'qrcode-terminal'
 import { Hex } from 'viem'
 import { mnemonicToAccount } from 'viem/accounts'
-import { env } from '../../config'
-import { fetchRequest, HttpRequestMethod } from '../../services/farcaster'
+import { env } from '../../config.js'
+import {
+  fetchRequest,
+  HttpRequestMethod,
+} from '../../services/farcaster/index.js'
 
 const SIGNED_KEY_REQUEST_VALIDATOR_EIP_712_DOMAIN = {
   chainId: 10,

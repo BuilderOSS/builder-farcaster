@@ -1,7 +1,7 @@
 import { Prisma } from '@prisma/client'
 import type { JsonValue } from 'type-fest'
 import { v4 as uuidv4 } from 'uuid'
-import { prisma } from './db'
+import { prisma } from './db.js'
 
 const DEFAULT_MAX_RETRIES = 3
 

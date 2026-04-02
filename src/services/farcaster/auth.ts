@@ -1,6 +1,6 @@
 import { signAsync } from '@noble/ed25519'
 
-import { Env, EnvWithAppKeys } from './types'
+import { Env, EnvWithAppKeys } from './types.js'
 
 const AUTH_TOKEN_TTL_SECONDS = 300
 

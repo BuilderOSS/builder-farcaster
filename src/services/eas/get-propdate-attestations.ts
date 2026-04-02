@@ -3,15 +3,15 @@ import { DateTime } from 'luxon'
 import pLimit from 'p-limit'
 import { flatMap, pipe } from 'remeda'
 import { Hex, zeroHash } from 'viem'
-import { runBuilderRequestWithRetry } from '../builder/request'
+import { runBuilderRequestWithRetry } from '../builder/request.js'
 import {
   MessageType,
   Propdate,
   PropdateMessage,
   PropdateObject,
-} from '../builder/types'
-import { propdateChainEndpoints } from './'
-import { fetchFromURL } from './ipfs'
+} from '../builder/types.js'
+import { propdateChainEndpoints } from './index.js'
+import { fetchFromURL } from './ipfs.js'
 
 interface Data {
   proposalUpdates: {

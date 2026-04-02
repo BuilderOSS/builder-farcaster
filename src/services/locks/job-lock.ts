@@ -1,4 +1,4 @@
-import { prisma } from '../../db'
+import { prisma } from '../../db.js'
 
 /**
  * Attempts to acquire a named job lock with TTL.

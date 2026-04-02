@@ -1,4 +1,4 @@
-import { env } from '../../config'
+import { env } from '../../config.js'
 
 /**
  * Validates whether an incoming request was sent by Vercel Cron.

@@ -2,9 +2,9 @@ import { gql, GraphQLClient } from 'graphql-request'
 import { DateTime } from 'luxon'
 import { pipe, uniqueBy } from 'remeda'
 import { JsonObject } from 'type-fest'
-import { chainEndpoints } from './index'
-import { runBuilderRequestWithRetry } from './request'
-import { Proposal } from './types'
+import { chainEndpoints } from './index.js'
+import { runBuilderRequestWithRetry } from './request.js'
+import { Proposal } from './types.js'
 
 type Data = {
   proposals: Proposal[]

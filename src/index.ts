@@ -1,11 +1,11 @@
 import { Command } from 'commander'
 import packageJson from '../package.json'
-import { farcasterToken } from './commands/farcaster/token'
-import { processInvitesCommand } from './commands/process/invites'
-import { processUpdates } from './commands/process/propdates'
-import { processProposalsCommand } from './commands/process/proposals'
-import { queueConsumeCommand } from './commands/queues/consume'
-import { getTargetingOptionsFromEnv } from './services/testing/targeting'
+import { farcasterToken } from './commands/farcaster/token.js'
+import { processInvitesCommand } from './commands/process/invites.js'
+import { processUpdates } from './commands/process/propdates.js'
+import { processProposalsCommand } from './commands/process/proposals.js'
+import { queueConsumeCommand } from './commands/queues/consume.js'
+import { getTargetingOptionsFromEnv } from './services/testing/targeting.js'
 
 // Create a new Command instance for the CLI tool
 const program = new Command()

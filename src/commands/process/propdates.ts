@@ -1,18 +1,18 @@
 import { filter } from 'remeda'
 import { JsonValue } from 'type-fest'
 import { Hex } from 'viem'
+import { getCache, setCache } from '../../cache.js'
+import { logger } from '../../logger.js'
+import { addToQueue } from '../../queue.js'
+import { Chain, Proposal } from '../../services/builder/types.js'
+import { getPropdateAttestations } from '../../services/eas/get-propdate-attestations.js'
+import { TargetingOptions } from '../../services/testing/targeting.js'
 import {
   getFollowerFids,
   getFollowersDaoMap,
   getProposalFromId,
   getUserFid,
-} from '..'
-import { getCache, setCache } from '../../cache'
-import { logger } from '../../logger'
-import { addToQueue } from '../../queue'
-import { Chain, Proposal } from '../../services/builder/types'
-import { getPropdateAttestations } from '../../services/eas/get-propdate-attestations'
-import { TargetingOptions } from '../../services/testing/targeting'
+} from '../index.js'
 
 /**
  * Checks whether the follower should be processed based on targeting options.

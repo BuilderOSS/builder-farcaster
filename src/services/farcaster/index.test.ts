@@ -3,7 +3,7 @@ import {
   fetchRequest,
   HttpRequestMethod,
   runFarcasterRequestWithRetry,
-} from './'
+} from './index.js'
 
 describe('farcaster request helpers', () => {
   afterEach(() => {
