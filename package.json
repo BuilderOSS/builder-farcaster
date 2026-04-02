@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "build": "pnpm build:cli",
-    "build:cli": "pnpm prisma:generate && vite build",
-    "build:vercel": "pnpm prisma:generate && node scripts/build-vercel.js",
+    "build:cli": "pnpm generate:prisma && vite build",
+    "build:vercel": "pnpm generate:prisma && node scripts/build-vercel.js",
     "predev": "pnpm lint && pnpm build",
     "dev": "pnpm dev:process && pnpm dev:consume",
     "dev:consume": "node dist/index.js queues consume -l 10",
@@ -15,6 +15,7 @@
     "dev:process": "node dist/index.js process proposals",
     "dev:propdates": "node dist/index.js process propdates",
     "dev:tokengen": "node dist/index.js farcaster token",
+    "generate:prisma": "pnpm prisma:generate",
     "lint": "eslint",
     "prepare": "husky || :",
     "prisma:generate": "prisma generate",
