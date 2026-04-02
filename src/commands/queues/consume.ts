@@ -1,4 +1,4 @@
-import sha256 from 'crypto-js/sha256'
+import { createHash } from 'node:crypto'
 import { uniqueBy } from 'remeda'
 import removeMd from 'remove-markdown'
 import { v4 as uuidv4 } from 'uuid'
@@ -11,6 +11,9 @@ import { sendDirectCast } from '../../services/farcaster/send-direct-cast.js'
 import { isPast, toRelativeTime } from '../../utils.js'
 
 const noSendNotifications = parseBooleanEnv(env.NO_SEND_NOTIFICATIONS, false)
+
+const sha256Hex = (value: string): string =>
+  createHash('sha256').update(value).digest('hex')
 
 type TaskData = {
   type: 'notification' | 'invitation'
@@ -219,13 +222,13 @@ async function handleNotification(
       message = formatProposalMessage(proposal)
     }
 
-    const idempotencyKey = sha256(message).toString()
+    const idempotencyKey = sha256Hex(message)
 
     if (noSendNotifications) {
       logger.info(
         {
           idempotencyKey,
-          recipientHash: sha256(recipient.toString()).toString(),
+          recipientHash: sha256Hex(recipient.toString()),
         },
         'NO_SEND_NOTIFICATIONS enabled. Skipping direct cast send.',
       )
@@ -293,14 +296,14 @@ async function handleInvitation(
           `Stay informed about new proposals in your DAOs by following @builderbot on Farcaster ` +
           `and make your voice count! 🎉`
 
-    const idempotencyKey = sha256(message).toString()
+    const idempotencyKey = sha256Hex(message)
 
     if (noSendNotifications) {
       logger.info(
         {
           daoCount: uniqueDaos.length,
           idempotencyKey,
-          recipientHash: sha256(recipient.toString()).toString(),
+          recipientHash: sha256Hex(recipient.toString()),
         },
         'NO_SEND_NOTIFICATIONS enabled. Skipping invitation direct cast send.',
       )
