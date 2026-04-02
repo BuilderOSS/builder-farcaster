@@ -194,7 +194,7 @@ async function convertPropdateToObject(
   try {
     const result: PropdateObject = {
       message,
-      messageType: Number(messageType) as MessageType,
+      messageType: messageType as MessageType,
       originalMessageId,
       parsedMessage: { content: '' },
       proposalId,

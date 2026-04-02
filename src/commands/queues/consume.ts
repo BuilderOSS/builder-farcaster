@@ -189,7 +189,7 @@ function formatPropdateMessage(propdate: Propdate, proposal: Proposal): string {
     `📝 Proposal update in ${daoName}`,
     `#${proposalNumber.toString()} - ${proposalTitle}${milestoneText}`,
     '',
-    `Posted: ${toRelativeTime(Number(createdAt))}`,
+    `Posted: ${toRelativeTime(createdAt)}`,
     '',
     truncatedUpdate,
     '',

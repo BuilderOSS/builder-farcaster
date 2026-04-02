@@ -167,7 +167,7 @@ export async function retryTask(
     return false
   }
 
-  const parsedMaxRetries = Number(task.maxRetries)
+  const parsedMaxRetries = task.maxRetries
   const maxRetries = Number.isFinite(parsedMaxRetries)
     ? parsedMaxRetries
     : DEFAULT_MAX_RETRIES
