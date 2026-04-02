@@ -12,7 +12,7 @@ const prismaMock = vi.hoisted(() => ({
   },
 }))
 
-vi.mock('@/config', () => ({
+vi.mock('../src/config', () => ({
   env: {
     PENDING_AGE_WARNING_MINUTES: 30,
     PENDING_WARNING_THRESHOLD: 500,
@@ -20,11 +20,11 @@ vi.mock('@/config', () => ({
   },
 }))
 
-vi.mock('@/services/cron/auth', () => ({
+vi.mock('../src/services/cron/auth', () => ({
   isAuthorizedCronRequest: isAuthorizedCronRequestMock,
 }))
 
-vi.mock('@/db', () => ({
+vi.mock('../src/db', () => ({
   prisma: prismaMock,
 }))
 

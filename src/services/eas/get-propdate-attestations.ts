@@ -1,17 +1,17 @@
-import { runBuilderRequestWithRetry } from '@/services/builder/request'
-import {
-  MessageType,
-  Propdate,
-  PropdateMessage,
-  PropdateObject,
-} from '@/services/builder/types'
-import { propdateChainEndpoints } from '@/services/eas'
-import { fetchFromURL } from '@/services/eas/ipfs'
 import { gql, GraphQLClient } from 'graphql-request'
 import { DateTime } from 'luxon'
 import pLimit from 'p-limit'
 import { flatMap, pipe } from 'remeda'
 import { Hex, zeroHash } from 'viem'
+import { runBuilderRequestWithRetry } from '../builder/request'
+import {
+  MessageType,
+  Propdate,
+  PropdateMessage,
+  PropdateObject,
+} from '../builder/types'
+import { propdateChainEndpoints } from './'
+import { fetchFromURL } from './ipfs'
 
 interface Data {
   proposalUpdates: {

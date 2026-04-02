@@ -10,15 +10,15 @@ const { envMock } = vi.hoisted(() => ({
   },
 }))
 
-vi.mock('@/config', () => ({
+vi.mock('../../config', () => ({
   env: envMock,
 }))
 
-let getTargetingOptionsFromQuery: typeof import('@/services/testing/targeting').getTargetingOptionsFromQuery
-let mergeTargetingOptions: typeof import('@/services/testing/targeting').mergeTargetingOptions
+let getTargetingOptionsFromQuery: typeof import('./targeting').getTargetingOptionsFromQuery
+let mergeTargetingOptions: typeof import('./targeting').mergeTargetingOptions
 
 beforeAll(async () => {
-  const targetingModule = await import('@/services/testing/targeting')
+  const targetingModule = await import('./targeting')
   getTargetingOptionsFromQuery = targetingModule.getTargetingOptionsFromQuery
   mergeTargetingOptions = targetingModule.mergeTargetingOptions
 })

@@ -1,10 +1,10 @@
-import { logger } from '@/logger'
+import { logger } from '../../logger'
 import {
   fetchRequest,
   HttpRequestMethod,
   runFarcasterRequestWithRetry,
-} from '@/services/farcaster/index'
-import { Env, User } from '@/services/farcaster/types'
+} from './index'
+import { Env, User } from './types'
 
 const MAX_PAGES = 100
 

@@ -1,7 +1,7 @@
-import { chainEndpoints } from '@/services/builder/index'
-import { Env, Owner } from '@/services/builder/types'
 import { gql, GraphQLClient } from 'graphql-request'
 import { JsonObject } from 'type-fest'
+import { chainEndpoints } from './index'
+import { Env, Owner } from './types'
 
 type Data = {
   owners: Owner[] | null

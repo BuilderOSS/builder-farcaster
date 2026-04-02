@@ -1,10 +1,10 @@
-import { env } from '@/config'
-import { fetchRequest, HttpRequestMethod } from '@/services/farcaster'
 import { input } from '@inquirer/prompts'
 import { getPublicKeyAsync, utils } from '@noble/ed25519'
 import qrcode from 'qrcode-terminal'
 import { Hex } from 'viem'
 import { mnemonicToAccount } from 'viem/accounts'
+import { env } from '../../config'
+import { fetchRequest, HttpRequestMethod } from '../../services/farcaster'
 
 const SIGNED_KEY_REQUEST_VALIDATOR_EIP_712_DOMAIN = {
   chainId: 10,

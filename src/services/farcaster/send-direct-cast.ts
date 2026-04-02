@@ -1,5 +1,5 @@
-import { fetchRequest, HttpRequestMethod } from '@/services/farcaster/index'
-import { Env } from '@/services/farcaster/types'
+import { fetchRequest, HttpRequestMethod } from './index'
+import { Env } from './types'
 
 interface Result {
   success: boolean

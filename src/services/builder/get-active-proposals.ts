@@ -1,10 +1,10 @@
-import { chainEndpoints } from '@/services/builder/index'
-import { runBuilderRequestWithRetry } from '@/services/builder/request'
-import { Proposal } from '@/services/builder/types'
 import { gql, GraphQLClient } from 'graphql-request'
 import { DateTime } from 'luxon'
 import { pipe, uniqueBy } from 'remeda'
 import { JsonObject } from 'type-fest'
+import { chainEndpoints } from './index'
+import { runBuilderRequestWithRetry } from './request'
+import { Proposal } from './types'
 
 type Data = {
   proposals: Proposal[]

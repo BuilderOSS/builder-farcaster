@@ -1,11 +1,11 @@
-import { getDAOsForOwners } from '@/services/builder/get-daos-for-owners'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { getDAOsForOwners } from './get-daos-for-owners'
 
 const { runBuilderRequestWithRetryMock } = vi.hoisted(() => ({
   runBuilderRequestWithRetryMock: vi.fn(),
 }))
 
-vi.mock('@/services/builder/index', () => ({
+vi.mock('./index', () => ({
   chainEndpoints: [
     {
       chain: { id: 8453, name: 'base' },
@@ -18,7 +18,7 @@ vi.mock('@/services/builder/index', () => ({
   ],
 }))
 
-vi.mock('@/services/builder/request', () => ({
+vi.mock('./request', () => ({
   runBuilderRequestWithRetry: runBuilderRequestWithRetryMock,
 }))
 

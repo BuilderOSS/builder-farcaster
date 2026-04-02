@@ -1,6 +1,6 @@
-import { processProposalsCommand } from '@/commands/process/proposals'
 import { DateTime } from 'luxon'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { processProposalsCommand } from './proposals'
 
 const {
   addToQueueMock,
@@ -20,22 +20,22 @@ const {
   setCacheMock: vi.fn(),
 }))
 
-vi.mock('@/queue', () => ({
+vi.mock('../../queue', () => ({
   addToQueue: addToQueueMock,
 }))
 
-vi.mock('@/cache', () => ({
+vi.mock('../../cache', () => ({
   getCache: getCacheMock,
   setCache: setCacheMock,
 }))
 
-vi.mock('@/commands', () => ({
+vi.mock('..', () => ({
   getFollowerFids: getFollowerFidsMock,
   getFollowersDaoMap: getFollowersDaoMapMock,
   getUserFid: getUserFidMock,
 }))
 
-vi.mock('@/services/builder/get-active-proposals', () => ({
+vi.mock('../../services/builder/get-active-proposals', () => ({
   getActiveProposals: getActiveProposalsMock,
 }))
 

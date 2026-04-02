@@ -1,9 +1,9 @@
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   fetchRequest,
   HttpRequestMethod,
   runFarcasterRequestWithRetry,
-} from '@/services/farcaster'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+} from './'
 
 describe('farcaster request helpers', () => {
   afterEach(() => {

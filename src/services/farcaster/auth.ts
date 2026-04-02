@@ -1,6 +1,6 @@
 import { signAsync } from '@noble/ed25519'
 
-import { Env, EnvWithAppKeys } from '@/services/farcaster/types'
+import { Env, EnvWithAppKeys } from './types'
 
 const AUTH_TOKEN_TTL_SECONDS = 300
 

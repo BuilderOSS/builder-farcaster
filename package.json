@@ -4,8 +4,9 @@
   "description": "Tools and automation solutions for Builder DAO on Farcaster, enhancing community efficiency and engagement.",
   "type": "module",
   "scripts": {
-    "prebuild": "pnpm prisma:generate",
-    "build": "vite build",
+    "build": "pnpm build:cli",
+    "build:cli": "pnpm prisma:generate && vite build",
+    "build:vercel": "pnpm prisma:generate && node scripts/build-vercel.js",
     "predev": "pnpm lint && pnpm build",
     "dev": "pnpm dev:process && pnpm dev:consume",
     "dev:consume": "node dist/index.js queues consume -l 10",
@@ -81,7 +82,6 @@
     "typescript-eslint": "8.46.2",
     "vite": "5.4.11",
     "vite-plugin-node-polyfills": "0.22.0",
-    "vite-tsconfig-paths": "5.1.3",
     "vitest": "2.1.5"
   },
   "packageManager": "pnpm@10.12.1",

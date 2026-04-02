@@ -1,14 +1,14 @@
-import { env } from '@/config'
-import { parseBooleanEnv } from '@/flags'
-import { logger } from '@/logger'
-import { claimPendingTasks, completeTask, retryTask } from '@/queue'
-import { Dao, Propdate, Proposal } from '@/services/builder/types'
-import { sendDirectCast } from '@/services/farcaster/send-direct-cast'
-import { isPast, toRelativeTime } from '@/utils'
 import sha256 from 'crypto-js/sha256'
 import { uniqueBy } from 'remeda'
 import removeMd from 'remove-markdown'
 import { v4 as uuidv4 } from 'uuid'
+import { env } from '../../config'
+import { parseBooleanEnv } from '../../flags'
+import { logger } from '../../logger'
+import { claimPendingTasks, completeTask, retryTask } from '../../queue'
+import { Dao, Propdate, Proposal } from '../../services/builder/types'
+import { sendDirectCast } from '../../services/farcaster/send-direct-cast'
+import { isPast, toRelativeTime } from '../../utils'
 
 const noSendNotifications = parseBooleanEnv(env.NO_SEND_NOTIFICATIONS, false)
 

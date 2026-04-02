@@ -1,15 +1,11 @@
 import { defineConfig } from 'vite'
-import tsconfigPaths from 'vite-tsconfig-paths'
 import packageJson from './package.json' // Import the package.json file
 
 const externalDeps = Object.keys(packageJson.dependencies || {})
 const nodeBuiltins = [/^node:.*/]
 
 export default defineConfig({
-  plugins: [
-    // Support for TypeScript path aliases
-    tsconfigPaths(),
-  ],
+  plugins: [],
   build: {
     target: 'es2022',
     lib: {
