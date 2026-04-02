@@ -1,5 +1,5 @@
-import { getFollowers } from '@/services/farcaster/get-followers'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { getFollowers } from './get-followers'
 
 const { fetchRequestMock, runFarcasterRequestWithRetryMock } = vi.hoisted(
   () => ({
@@ -9,7 +9,7 @@ const { fetchRequestMock, runFarcasterRequestWithRetryMock } = vi.hoisted(
   }),
 )
 
-vi.mock('@/services/farcaster/index', () => ({
+vi.mock('./index', () => ({
   fetchRequest: fetchRequestMock,
   HttpRequestMethod: { GET: 'GET' },
   runFarcasterRequestWithRetry: runFarcasterRequestWithRetryMock,

@@ -1,12 +1,12 @@
-import { getCache, setCache } from '@/cache'
-import { env } from '@/config'
-import { logger } from '@/logger'
-import { getDAOsForOwners } from '@/services/builder/get-daos-for-owners'
-import { getProposalData } from '@/services/builder/get-proposal-from-id'
-import { Chain, Proposal } from '@/services/builder/types'
-import { getFollowers } from '@/services/farcaster/get-followers'
-import { getVerifications } from '@/services/farcaster/get-verifications'
 import { Hex } from 'viem'
+import { getCache, setCache } from '../cache'
+import { env } from '../config'
+import { logger } from '../logger'
+import { getDAOsForOwners } from '../services/builder/get-daos-for-owners'
+import { getProposalData } from '../services/builder/get-proposal-from-id'
+import { Chain, Proposal } from '../services/builder/types'
+import { getFollowers } from '../services/farcaster/get-followers'
+import { getVerifications } from '../services/farcaster/get-verifications'
 
 export const CACHE_MAX_AGE_MS = 86400 * 1000 // 1 day in milliseconds
 

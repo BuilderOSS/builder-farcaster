@@ -55,9 +55,13 @@ jobs:
       - name: Install dependencies using pnpm
         run: pnpm install --frozen-lockfile
 
-      # This compiles the application in optimized production mode and output it to the build folder.
-      - name: Build the application and export it
+      # Build CLI artifact used for local/manual runs.
+      - name: Build CLI artifact
         run: pnpm run build
+
+      # Build deployment static output to mirror Vercel build command.
+      - name: Build Vercel output
+        run: pnpm run build:vercel
 
       # Runs unit tests for the application using Vitest.
       - name: Execute tests using Vitest

@@ -1,5 +1,5 @@
-import { processUpdates } from '@/commands/process/propdates'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { processUpdates } from './propdates'
 
 const {
   addToQueueMock,
@@ -21,20 +21,20 @@ const {
   setCacheMock: vi.fn(),
 }))
 
-vi.mock('@/queue', () => ({
+vi.mock('../../queue', () => ({
   addToQueue: addToQueueMock,
 }))
 
-vi.mock('@/cache', () => ({
+vi.mock('../../cache', () => ({
   getCache: getCacheMock,
   setCache: setCacheMock,
 }))
 
-vi.mock('@/services/eas/get-propdate-attestations', () => ({
+vi.mock('../../services/eas/get-propdate-attestations', () => ({
   getPropdateAttestations: getPropdateAttestationsMock,
 }))
 
-vi.mock('@/commands', () => ({
+vi.mock('..', () => ({
   getFollowerFids: getFollowerFidsMock,
   getFollowersDaoMap: getFollowersDaoMapMock,
   getProposalFromId: getProposalFromIdMock,

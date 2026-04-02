@@ -1,8 +1,8 @@
-import { env } from '@/config'
-import { parseBooleanEnv } from '@/flags'
-import { Chain } from '@/services/builder/types'
 import { PUBLIC_SUBGRAPH_URL } from '@buildeross/constants'
 import { CHAIN_ID } from '@buildeross/types'
+import { env } from '../../config'
+import { parseBooleanEnv } from '../../flags'
+import { Chain } from './types'
 
 const allChains: Chain[] = [
   {

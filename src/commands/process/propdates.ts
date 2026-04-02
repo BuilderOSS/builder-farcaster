@@ -1,18 +1,18 @@
-import { getCache, setCache } from '@/cache'
+import { filter } from 'remeda'
+import { JsonValue } from 'type-fest'
+import { Hex } from 'viem'
 import {
   getFollowerFids,
   getFollowersDaoMap,
   getProposalFromId,
   getUserFid,
-} from '@/commands'
-import { logger } from '@/logger'
-import { addToQueue } from '@/queue'
-import { Chain, Proposal } from '@/services/builder/types'
-import { getPropdateAttestations } from '@/services/eas/get-propdate-attestations'
-import { TargetingOptions } from '@/services/testing/targeting'
-import { filter } from 'remeda'
-import { JsonValue } from 'type-fest'
-import { Hex } from 'viem'
+} from '..'
+import { getCache, setCache } from '../../cache'
+import { logger } from '../../logger'
+import { addToQueue } from '../../queue'
+import { Chain, Proposal } from '../../services/builder/types'
+import { getPropdateAttestations } from '../../services/eas/get-propdate-attestations'
+import { TargetingOptions } from '../../services/testing/targeting'
 
 /**
  * Checks whether the follower should be processed based on targeting options.

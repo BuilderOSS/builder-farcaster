@@ -1,6 +1,6 @@
-import { addToQueue, completeTask, retryTask } from '@/queue'
 import { Prisma } from '@prisma/client'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { addToQueue, completeTask, retryTask } from './queue'
 
 interface QueueTaskRow {
   maxRetries: number
@@ -16,7 +16,7 @@ const prismaMock = vi.hoisted(() => ({
   },
 }))
 
-vi.mock('@/db', () => ({
+vi.mock('./db', () => ({
   prisma: prismaMock,
 }))
 

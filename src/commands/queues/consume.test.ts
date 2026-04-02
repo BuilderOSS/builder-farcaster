@@ -21,28 +21,28 @@ const {
   sendDirectCastMock: vi.fn(),
 }))
 
-vi.mock('@/config', () => ({
+vi.mock('../../config', () => ({
   env: envMock,
 }))
 
-vi.mock('@/flags', () => ({
+vi.mock('../../flags', () => ({
   parseBooleanEnv: () => false,
 }))
 
-vi.mock('@/queue', () => ({
+vi.mock('../../queue', () => ({
   claimPendingTasks: claimPendingTasksMock,
   completeTask: completeTaskMock,
   retryTask: retryTaskMock,
 }))
 
-vi.mock('@/services/farcaster/send-direct-cast', () => ({
+vi.mock('../../services/farcaster/send-direct-cast', () => ({
   sendDirectCast: sendDirectCastMock,
 }))
 
-let queueConsumeCommand: typeof import('@/commands/queues/consume').queueConsumeCommand
+let queueConsumeCommand: typeof import('./consume').queueConsumeCommand
 
 beforeAll(async () => {
-  const consumeModule = await import('@/commands/queues/consume')
+  const consumeModule = await import('./consume')
   queueConsumeCommand = consumeModule.queueConsumeCommand
 })
 

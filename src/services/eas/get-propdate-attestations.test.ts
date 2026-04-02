@@ -1,21 +1,21 @@
-import { MessageType } from '@/services/builder/types'
-import { getPropdateAttestations } from '@/services/eas/get-propdate-attestations'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { MessageType } from '../builder/types'
+import { getPropdateAttestations } from './get-propdate-attestations'
 
 const { fetchFromURLMock, runBuilderRequestWithRetryMock } = vi.hoisted(() => ({
   fetchFromURLMock: vi.fn(),
   runBuilderRequestWithRetryMock: vi.fn(),
 }))
 
-vi.mock('@/services/builder/request', () => ({
+vi.mock('../builder/request', () => ({
   runBuilderRequestWithRetry: runBuilderRequestWithRetryMock,
 }))
 
-vi.mock('@/services/eas/ipfs', () => ({
+vi.mock('./ipfs', () => ({
   fetchFromURL: fetchFromURLMock,
 }))
 
-vi.mock('@/services/eas', () => ({
+vi.mock('./', () => ({
   propdateChainEndpoints: [
     {
       chain: { id: 8453, name: 'base' },

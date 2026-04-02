@@ -1,11 +1,11 @@
-import { logger } from '@/logger'
+import { NonNegative } from 'type-fest'
+import { logger } from '../../logger'
 import {
   fetchRequest,
   HttpRequestMethod,
   runFarcasterRequestWithRetry,
-} from '@/services/farcaster/index'
-import { Env, Verification } from '@/services/farcaster/types'
-import { NonNegative } from 'type-fest'
+} from './index'
+import { Env, Verification } from './types'
 
 const MAX_PAGES = 100
 
