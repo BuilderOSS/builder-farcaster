@@ -99,6 +99,13 @@ async function handleProposalUpdates(options: TargetingOptions) {
 
     logger.info({ propdates }, 'New propdates retrieved.')
 
+    if (propdates.length === 0) {
+      logger.info(
+        'No propdates found after filtering, skipping follower processing.',
+      )
+      return
+    }
+
     const proposalLookup = await buildProposalLookup(
       propdates.map((propdate) => ({
         chain: propdate.chain,
