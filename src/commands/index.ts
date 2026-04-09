@@ -210,29 +210,33 @@ export function getUserFid() {
  */
 export async function getProposalFromId(chain: Chain, proposalId: Hex) {
   const cacheKey = `propdate_${chain.id.toString()}_${proposalId.toLowerCase()}`
-  let proposal = await getCache<Proposal | null>(cacheKey, CACHE_MAX_AGE_MS)
+  const proposal = await getCache<Proposal | null>(cacheKey, CACHE_MAX_AGE_MS)
 
   if (proposal) {
     logger.debug({ proposal }, 'Proposal fetched from cache')
-  } else {
-    try {
-      const response = await getProposalData(chain, proposalId)
-      proposal = response.proposal
-      await setCache(cacheKey, proposal)
-      logger.info({ proposal }, 'Proposal cached successfully')
-    } catch (error) {
-      if (error instanceof Error) {
-        if (error.message.includes('Proposal does not exist')) {
-          logger.error(
-            { message: error.message, stack: error.stack },
-            'Invalid Proposal Id',
-          )
-        }
-      } else {
-        // handle other errors
-        throw error
-      }
-    }
+    return proposal
   }
-  return proposal
+
+  try {
+    const response = await getProposalData(chain, proposalId)
+    await setCache(cacheKey, response.proposal)
+    logger.info({ proposal: response.proposal }, 'Proposal cached successfully')
+    return response.proposal
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      error.message.includes('Proposal does not exist')
+    ) {
+      logger.warn(
+        {
+          chain: chain.name,
+          proposalId,
+        },
+        'Propdate proposal reference does not exist, skipping this update.',
+      )
+      return null
+    }
+
+    throw error
+  }
 }
