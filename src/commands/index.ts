@@ -11,6 +11,72 @@ import { getVerifications } from '../services/farcaster/get-verifications.js'
 export const CACHE_MAX_AGE_MS = 86400 * 1000 // 1 day in milliseconds
 
 /**
+ * Determines whether an error represents a missing proposal.
+ * Checks structured error fields first, then falls back to message matching.
+ * @param error - Unknown thrown error.
+ * @returns True when the error indicates proposal absence.
+ */
+function isProposalNotFound(error: unknown): boolean {
+  if (!error || typeof error !== 'object') {
+    return false
+  }
+
+  const candidate = error as {
+    code?: unknown
+    message?: unknown
+    response?: {
+      errors?: {
+        extensions?: {
+          code?: unknown
+          type?: unknown
+        }
+        message?: unknown
+        type?: unknown
+      }[]
+      status?: unknown
+    }
+    type?: unknown
+  }
+
+  const hasNotFoundSignal = (value: unknown): boolean => {
+    if (typeof value !== 'string') {
+      return false
+    }
+
+    return /not[_\s-]?found/i.test(value)
+  }
+
+  if (hasNotFoundSignal(candidate.code) || hasNotFoundSignal(candidate.type)) {
+    return true
+  }
+
+  const responseErrors = candidate.response?.errors
+  if (Array.isArray(responseErrors)) {
+    for (const responseError of responseErrors) {
+      if (
+        hasNotFoundSignal(responseError.type) ||
+        hasNotFoundSignal(responseError.extensions?.code) ||
+        hasNotFoundSignal(responseError.extensions?.type)
+      ) {
+        return true
+      }
+
+      if (
+        typeof responseError.message === 'string' &&
+        /proposal does not exist/i.test(responseError.message)
+      ) {
+        return true
+      }
+    }
+  }
+
+  return (
+    typeof candidate.message === 'string' &&
+    /proposal does not exist/i.test(candidate.message)
+  )
+}
+
+/**
  * Builds a chain-qualified DAO key.
  * @param daoId - DAO contract address.
  * @param chainId - Chain id.
@@ -210,29 +276,30 @@ export function getUserFid() {
  */
 export async function getProposalFromId(chain: Chain, proposalId: Hex) {
   const cacheKey = `propdate_${chain.id.toString()}_${proposalId.toLowerCase()}`
-  let proposal = await getCache<Proposal | null>(cacheKey, CACHE_MAX_AGE_MS)
+  const proposal = await getCache<Proposal | null>(cacheKey, CACHE_MAX_AGE_MS)
 
   if (proposal) {
     logger.debug({ proposal }, 'Proposal fetched from cache')
-  } else {
-    try {
-      const response = await getProposalData(chain, proposalId)
-      proposal = response.proposal
-      await setCache(cacheKey, proposal)
-      logger.info({ proposal }, 'Proposal cached successfully')
-    } catch (error) {
-      if (error instanceof Error) {
-        if (error.message.includes('Proposal does not exist')) {
-          logger.error(
-            { message: error.message, stack: error.stack },
-            'Invalid Proposal Id',
-          )
-        }
-      } else {
-        // handle other errors
-        throw error
-      }
-    }
+    return proposal
   }
-  return proposal
+
+  try {
+    const response = await getProposalData(chain, proposalId)
+    await setCache(cacheKey, response.proposal)
+    logger.info({ proposal: response.proposal }, 'Proposal cached successfully')
+    return response.proposal
+  } catch (error) {
+    if (isProposalNotFound(error)) {
+      logger.warn(
+        {
+          chain: chain.name,
+          proposalId,
+        },
+        'Propdate proposal reference does not exist, skipping this update.',
+      )
+      return null
+    }
+
+    throw error
+  }
 }

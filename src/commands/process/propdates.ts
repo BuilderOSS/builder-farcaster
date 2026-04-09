@@ -41,6 +41,18 @@ function getProposalKey(chainId: number, proposalId: string): string {
   return `${chainId.toString()}:${proposalId.toLowerCase()}`
 }
 
+type ProposalLookupStatus = 'found' | 'not_found' | 'retry_later'
+
+type ProposalLookupEntry =
+  | {
+      proposal: Proposal
+      status: 'found'
+    }
+  | {
+      proposal: null
+      status: Exclude<ProposalLookupStatus, 'found'>
+    }
+
 /**
  * Prefetches proposals needed for propdates processing.
  * @param proposalRefs - Proposal refs with chain id and proposal id.
@@ -51,7 +63,7 @@ async function buildProposalLookup(
     chain: Chain
     proposalId: Hex
   }[],
-): Promise<Map<string, Proposal | null | undefined>> {
+): Promise<Map<string, ProposalLookupEntry>> {
   const uniqueRefs = new Map<string, (typeof proposalRefs)[number]>()
 
   for (const proposalRef of proposalRefs) {
@@ -64,13 +76,40 @@ async function buildProposalLookup(
     }
   }
 
-  const proposalLookup = new Map<string, Proposal | null | undefined>()
+  const proposalLookup = new Map<string, ProposalLookupEntry>()
   for (const [proposalKey, proposalRef] of uniqueRefs) {
-    const proposal = await getProposalFromId(
-      proposalRef.chain,
-      proposalRef.proposalId,
-    )
-    proposalLookup.set(proposalKey, proposal)
+    try {
+      const proposal = await getProposalFromId(
+        proposalRef.chain,
+        proposalRef.proposalId,
+      )
+
+      if (proposal) {
+        proposalLookup.set(proposalKey, {
+          proposal,
+          status: 'found',
+        })
+      } else {
+        proposalLookup.set(proposalKey, {
+          proposal: null,
+          status: 'not_found',
+        })
+      }
+    } catch (error) {
+      proposalLookup.set(proposalKey, {
+        proposal: null,
+        status: 'retry_later',
+      })
+
+      logger.warn(
+        {
+          chain: proposalRef.chain.name,
+          message: error instanceof Error ? error.message : String(error),
+          proposalId: proposalRef.proposalId,
+        },
+        'Transient proposal lookup failure, will retry in a future run.',
+      )
+    }
   }
 
   return proposalLookup
@@ -98,6 +137,15 @@ async function handleProposalUpdates(options: TargetingOptions) {
     })
 
     logger.info({ propdates }, 'New propdates retrieved.')
+
+    const metrics = {
+      alreadyNotified: 0,
+      daoMismatch: 0,
+      enqueued: 0,
+      fetched: propdates.length,
+      proposalNotFound: 0,
+      proposalRetryLater: 0,
+    }
 
     if (propdates.length === 0) {
       logger.info(
@@ -188,19 +236,41 @@ async function handleProposalUpdates(options: TargetingOptions) {
           propdate.chain.id,
           propdate.proposalId,
         )
-        const proposal = proposalLookup.get(proposalKey)
+        const proposalEntry = proposalLookup.get(proposalKey)
 
-        if (!proposal) {
-          // skip if proposal doesn't exist or Json parsing error
+        if (!proposalEntry) {
+          metrics.proposalRetryLater += 1
+          logger.error(
+            {
+              proposalEntry,
+              proposalId: propdate.proposalId,
+              propdateId: propdate.id,
+              proposalKey,
+            },
+            'Invariant violated: missing lookup entry from buildProposalLookup, skipping propdate for safety.',
+          )
+          continue
+        }
+
+        if (proposalEntry.status !== 'found') {
+          if (proposalEntry.status === 'not_found') {
+            metrics.proposalNotFound += 1
+          } else {
+            metrics.proposalRetryLater += 1
+          }
+
           logger.debug(
             {
               propdateId: propdate.id,
               proposalId: propdate.proposalId,
+              reason: proposalEntry.status,
             },
-            'Proposal not found, skipping.',
+            'Proposal unavailable for propdate, skipping for now.',
           )
           continue
         }
+
+        const proposal = proposalEntry.proposal
 
         if (
           options.targetDaoIds &&
@@ -214,6 +284,7 @@ async function handleProposalUpdates(options: TargetingOptions) {
 
         // If the proposal's DAO ID is not in the list of DAOs for the current follower, skip to the next update
         if (!daos.includes(proposalDaoKey)) {
+          metrics.daoMismatch += 1
           logger.debug(
             {
               propdateId: propdate.id,
@@ -227,6 +298,7 @@ async function handleProposalUpdates(options: TargetingOptions) {
 
         // Check if this propdate has already been notified
         if (notifiedUpdatesSet.has(propdate.id)) {
+          metrics.alreadyNotified += 1
           logger.debug(
             {
               propdateId: propdate.id,
@@ -256,6 +328,8 @@ async function handleProposalUpdates(options: TargetingOptions) {
             propdate: propdate as unknown as JsonValue,
             proposal: proposal as unknown as JsonValue,
           })
+
+          metrics.enqueued += 1
         }
 
         // Mark this update as notified
@@ -279,6 +353,8 @@ async function handleProposalUpdates(options: TargetingOptions) {
         await setCache(cacheKey, Array.from(notifiedUpdatesSet))
       }
     }
+
+    logger.info(metrics, 'Propdate processing summary.')
   } catch (error) {
     if (error instanceof Error) {
       logger.error(

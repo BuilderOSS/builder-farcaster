@@ -56,8 +56,9 @@ export const getPropdateAttestations = async (): Promise<Result> => {
   try {
     const limit = pLimit(10)
 
-    const oneDayAgoInSeconds = Math.floor(
-      DateTime.now().minus({ hours: 24 }).toSeconds(),
+    const lookbackHours = 48
+    const lookbackStartInSeconds = Math.floor(
+      DateTime.now().minus({ hours: lookbackHours }).toSeconds(),
     )
     const toTimestamp = Math.floor(DateTime.now().toSeconds())
 
@@ -65,7 +66,7 @@ export const getPropdateAttestations = async (): Promise<Result> => {
       query recentPropdates(
         $fromTimestamp: BigInt!
         $toTimestamp: BigInt!
-        $zeroHash: Bytes!
+        $originMessageId: Bytes!
         $first: Int!
         $skip: Int!
       ) {
@@ -74,7 +75,7 @@ export const getPropdateAttestations = async (): Promise<Result> => {
             timestamp_gte: $fromTimestamp
             timestamp_lte: $toTimestamp
             deleted: false
-            originalMessageId: $zeroHash
+            originalMessageId: $originMessageId
           }
           orderBy: timestamp
           orderDirection: desc
@@ -99,9 +100,9 @@ export const getPropdateAttestations = async (): Promise<Result> => {
     `
 
     const variables = {
-      fromTimestamp: oneDayAgoInSeconds.toString(),
+      fromTimestamp: lookbackStartInSeconds.toString(),
       toTimestamp: toTimestamp.toString(),
-      zeroHash,
+      originMessageId: zeroHash,
     }
     const pageSize = 1000
 
