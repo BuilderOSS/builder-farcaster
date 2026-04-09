@@ -238,8 +238,22 @@ async function handleProposalUpdates(options: TargetingOptions) {
         )
         const proposalEntry = proposalLookup.get(proposalKey)
 
-        if (proposalEntry?.status !== 'found') {
-          if (proposalEntry?.status === 'not_found') {
+        if (!proposalEntry) {
+          metrics.proposalRetryLater += 1
+          logger.error(
+            {
+              proposalEntry,
+              proposalId: propdate.proposalId,
+              propdateId: propdate.id,
+              proposalKey,
+            },
+            'Invariant violated: missing lookup entry from buildProposalLookup, skipping propdate for safety.',
+          )
+          continue
+        }
+
+        if (proposalEntry.status !== 'found') {
+          if (proposalEntry.status === 'not_found') {
             metrics.proposalNotFound += 1
           } else {
             metrics.proposalRetryLater += 1
@@ -249,7 +263,7 @@ async function handleProposalUpdates(options: TargetingOptions) {
             {
               propdateId: propdate.id,
               proposalId: propdate.proposalId,
-              reason: proposalEntry?.status ?? 'missing_lookup_entry',
+              reason: proposalEntry.status,
             },
             'Proposal unavailable for propdate, skipping for now.',
           )
@@ -314,9 +328,9 @@ async function handleProposalUpdates(options: TargetingOptions) {
             propdate: propdate as unknown as JsonValue,
             proposal: proposal as unknown as JsonValue,
           })
-        }
 
-        metrics.enqueued += 1
+          metrics.enqueued += 1
+        }
 
         // Mark this update as notified
         notifiedUpdatesSet.add(propdate.id)

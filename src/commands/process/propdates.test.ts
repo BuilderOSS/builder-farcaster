@@ -130,7 +130,7 @@ describe('processUpdates', () => {
     expect(addToQueueMock).not.toHaveBeenCalled()
   })
 
-  it('retries in future runs when proposal lookup has transient failure', async () => {
+  it('handles transient proposal lookup failure without enqueuing notifications', async () => {
     getProposalFromIdMock.mockRejectedValueOnce(new Error('subgraph timeout'))
 
     await expect(processUpdates()).resolves.toBeUndefined()
