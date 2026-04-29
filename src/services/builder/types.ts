@@ -15,6 +15,7 @@ export interface Dao {
   id: string
   name: string
   ownerCount: number
+  treasuryAddress?: string
   chain: Chain
 }
 
@@ -31,6 +32,7 @@ export interface Proposal {
   dao: Dao
   title: string
   proposer: string
+  values: string[]
   timeCreated: string
   voteStart: string
   voteEnd: string

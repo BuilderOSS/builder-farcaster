@@ -37,9 +37,11 @@ export const getActiveProposals = async (): Promise<Result> => {
         dao {
           id
           name
+          treasuryAddress
         }
         title
         proposer
+        values
         timeCreated
         voteStart
         voteEnd
