@@ -1,19 +1,9 @@
-import { RPC_URLS } from '@buildeross/constants'
+import { PUBLIC_ALL_CHAINS, RPC_URLS } from '@buildeross/constants'
 import { ProposalState } from '@buildeross/types'
-import { getProposalWarning } from '@buildeross/utils/warnings'
+import { getProposalWarning } from '@buildeross/utils'
 import { DateTime } from 'luxon'
 import { JsonValue } from 'type-fest'
 import { Chain as ViemChain, createPublicClient, http, isAddress } from 'viem'
-import {
-  base,
-  baseSepolia,
-  mainnet,
-  optimism,
-  optimismSepolia,
-  sepolia,
-  zora,
-  zoraSepolia,
-} from 'viem/chains'
 import { getCache, setCache } from '../../cache.js'
 import { logger } from '../../logger.js'
 import { addToQueue } from '../../queue.js'
@@ -36,16 +26,9 @@ interface ProposalBuckets {
   votingProposals: Proposal[]
 }
 
-const chainById: Partial<Record<number, ViemChain>> = {
-  [mainnet.id]: mainnet,
-  [optimism.id]: optimism,
-  [base.id]: base,
-  [zora.id]: zora,
-  [sepolia.id]: sepolia,
-  [optimismSepolia.id]: optimismSepolia,
-  [baseSepolia.id]: baseSepolia,
-  [zoraSepolia.id]: zoraSepolia,
-}
+const chainById: ReadonlyMap<number, ViemChain> = new Map(
+  PUBLIC_ALL_CHAINS.map((chain) => [chain.id, chain]),
+)
 
 /**
  * Derives proposal state for warning evaluation from voting timestamps.
@@ -90,14 +73,8 @@ async function getTreasuryBalance(
     return cachedBalance
   }
 
-  const chain = chainById[chainId]
-
-  if (!chain) {
-    return undefined
-  }
-
   const rpcUrlsByChain = RPC_URLS as Partial<Record<number, readonly string[]>>
-  const rpcUrls = rpcUrlsByChain[chain.id]
+  const rpcUrls = rpcUrlsByChain[chainId]
 
   if (!Array.isArray(rpcUrls) || rpcUrls.length === 0) {
     return undefined
@@ -110,6 +87,12 @@ async function getTreasuryBalance(
   }
 
   const rpcUrl = firstRpcUrl
+
+  const chain = chainById.get(chainId)
+
+  if (!chain) {
+    return undefined
+  }
 
   const client = createPublicClient({
     chain,

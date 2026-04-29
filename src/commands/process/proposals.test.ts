@@ -41,7 +41,7 @@ vi.mock('../../services/builder/get-active-proposals', () => ({
   getActiveProposals: getActiveProposalsMock,
 }))
 
-vi.mock('@buildeross/utils/warnings', () => ({
+vi.mock('@buildeross/utils', () => ({
   getProposalWarning: getProposalWarningMock,
 }))
 
