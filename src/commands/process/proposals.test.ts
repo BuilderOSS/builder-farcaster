@@ -8,6 +8,7 @@ const {
   getCacheMock,
   getFollowerFidsMock,
   getFollowersDaoMapMock,
+  getProposalWarningMock,
   getUserFidMock,
   setCacheMock,
 } = vi.hoisted(() => ({
@@ -16,6 +17,7 @@ const {
   getCacheMock: vi.fn(),
   getFollowerFidsMock: vi.fn(),
   getFollowersDaoMapMock: vi.fn(),
+  getProposalWarningMock: vi.fn(),
   getUserFidMock: vi.fn(),
   setCacheMock: vi.fn(),
 }))
@@ -39,6 +41,10 @@ vi.mock('../../services/builder/get-active-proposals', () => ({
   getActiveProposals: getActiveProposalsMock,
 }))
 
+vi.mock('@buildeross/utils/warnings', () => ({
+  getProposalWarning: getProposalWarningMock,
+}))
+
 /**
  * Creates a baseline proposal payload for tests.
  * @param overrides - Partial field overrides.
@@ -50,11 +56,14 @@ function makeProposal(overrides: Record<string, unknown> = {}) {
       chain: { id: 8453, name: 'BASE' },
       id: '0xabc',
       name: 'DAO',
+      treasuryAddress: '0x0000000000000000000000000000000000000001',
     },
     id: 'p1',
     proposalNumber: 1,
+    proposer: '0x0000000000000000000000000000000000000002',
     timeCreated: '100',
     title: 'Test proposal',
+    values: ['0'],
     voteEnd: '1100',
     voteStart: '900',
     ...overrides,
@@ -78,6 +87,7 @@ describe('processProposalsCommand', () => {
     getCacheMock.mockResolvedValue([])
     setCacheMock.mockResolvedValue(undefined)
     addToQueueMock.mockResolvedValue(undefined)
+    getProposalWarningMock.mockReturnValue('')
   })
 
   it('enqueues matching active proposals and updates cache', async () => {
@@ -126,5 +136,21 @@ describe('processProposalsCommand', () => {
     getActiveProposalsMock.mockRejectedValue(new Error('subgraph failed'))
 
     await expect(processProposalsCommand()).rejects.toThrow('subgraph failed')
+  })
+
+  it('attaches risk warning text to notification payload', async () => {
+    getActiveProposalsMock.mockResolvedValue({
+      proposals: [makeProposal()],
+    })
+    getProposalWarningMock.mockReturnValue('High-risk proposal warning')
+
+    await processProposalsCommand()
+
+    expect(addToQueueMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'notification',
+        warning: 'High-risk proposal warning',
+      }),
+    )
   })
 })

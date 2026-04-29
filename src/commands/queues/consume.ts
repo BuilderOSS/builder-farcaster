@@ -23,6 +23,7 @@ interface NotificationData {
   recipient: number
   proposal: Proposal
   propdate?: Propdate
+  warning?: string
 }
 
 interface InvitationData {
@@ -125,15 +126,23 @@ function isTaskData(value: unknown): value is TaskData {
     }
   }
 
+  if (
+    maybeTask.warning !== undefined &&
+    typeof maybeTask.warning !== 'string'
+  ) {
+    return false
+  }
+
   return true
 }
 
 /**
  * Formats a proposal notification message
  * @param proposal - The proposal data to format into a message
+ * @param warning - Optional risk warning text to append.
  * @returns A formatted string containing the proposal notification message
  */
-function formatProposalMessage(proposal: Proposal): string {
+function formatProposalMessage(proposal: Proposal, warning?: string): string {
   const {
     proposalNumber,
     title: proposalTitle,
@@ -147,7 +156,7 @@ function formatProposalMessage(proposal: Proposal): string {
     voteEnd: votingEndsAt,
   } = proposal
 
-  return [
+  const messageParts = [
     `🗳️ New proposal in ${daoName}`,
     `#${proposalNumber.toString()} - ${proposalTitle}`,
     '',
@@ -155,7 +164,13 @@ function formatProposalMessage(proposal: Proposal): string {
     `Voting: ${isPast(Number(votingStartsAt)) ? 'started' : 'starts'} ${toRelativeTime(Number(votingStartsAt))} · ${isPast(Number(votingEndsAt)) ? 'ended' : 'ends'} ${toRelativeTime(Number(votingEndsAt))}`,
     '',
     `Vote now: https://nouns.build/dao/${chainName.toLowerCase()}/${daoId}/vote/${proposalNumber.toString()}`,
-  ].join('\n')
+  ]
+
+  if (warning) {
+    messageParts.push('', `⚠️ Risk warning: ${warning}`)
+  }
+
+  return messageParts.join('\n')
 }
 
 /**
@@ -213,13 +228,13 @@ async function handleNotification(
   data: NotificationData,
 ): Promise<boolean> {
   try {
-    const { recipient, proposal, propdate } = data
+    const { recipient, proposal, propdate, warning } = data
     let message: string | undefined
 
     if (propdate) {
       message = formatPropdateMessage(propdate, proposal)
     } else {
-      message = formatProposalMessage(proposal)
+      message = formatProposalMessage(proposal, warning)
     }
 
     const idempotencyKey = sha256Hex(message)
