@@ -1,9 +1,8 @@
-import { PUBLIC_ALL_CHAINS, RPC_URLS } from '@buildeross/constants'
 import { ProposalState } from '@buildeross/types'
-import { getProposalWarning } from '@buildeross/utils'
+import { getProposalWarning, getProvider } from '@buildeross/utils'
 import { DateTime } from 'luxon'
 import { JsonValue } from 'type-fest'
-import { Chain as ViemChain, createPublicClient, http, isAddress } from 'viem'
+import { isAddress } from 'viem'
 import { getCache, setCache } from '../../cache.js'
 import { logger } from '../../logger.js'
 import { addToQueue } from '../../queue.js'
@@ -25,10 +24,6 @@ interface ProposalBuckets {
   endingProposals: Proposal[]
   votingProposals: Proposal[]
 }
-
-const chainById: ReadonlyMap<number, ViemChain> = new Map(
-  PUBLIC_ALL_CHAINS.map((chain) => [chain.id, chain]),
-)
 
 /**
  * Derives proposal state for warning evaluation from voting timestamps.
@@ -73,31 +68,7 @@ async function getTreasuryBalance(
     return cachedBalance
   }
 
-  const rpcUrlsByChain = RPC_URLS as Partial<Record<number, readonly string[]>>
-  const rpcUrls = rpcUrlsByChain[chainId]
-
-  if (!Array.isArray(rpcUrls) || rpcUrls.length === 0) {
-    return undefined
-  }
-
-  const firstRpcUrl = rpcUrls[0] as unknown
-
-  if (typeof firstRpcUrl !== 'string' || firstRpcUrl.length === 0) {
-    return undefined
-  }
-
-  const rpcUrl = firstRpcUrl
-
-  const chain = chainById.get(chainId)
-
-  if (!chain) {
-    return undefined
-  }
-
-  const client = createPublicClient({
-    chain,
-    transport: http(rpcUrl),
-  })
+  const client = getProvider(chainId)
 
   try {
     const balance = await client.getBalance({
@@ -338,10 +309,6 @@ export async function processProposalsCommand(options: TargetingOptions = {}) {
       filteredProposals,
       currentUnixTimestamp,
     )
-    const proposalWarnings = await buildProposalWarnings(
-      filteredProposals,
-      currentUnixTimestamp,
-    )
 
     logger.info(
       {
@@ -355,6 +322,20 @@ export async function processProposalsCommand(options: TargetingOptions = {}) {
       logger.warn('No active or ending proposals found, terminating execution.')
       return
     }
+
+    const notifiableProposals = [
+      ...new Map(
+        [...votingProposals, ...endingProposals].map((proposal) => [
+          proposal.id,
+          proposal,
+        ]),
+      ).values(),
+    ]
+
+    const proposalWarnings = await buildProposalWarnings(
+      notifiableProposals,
+      currentUnixTimestamp,
+    )
 
     const userFid = getUserFid()
     const followers = await getFollowerFids(userFid)

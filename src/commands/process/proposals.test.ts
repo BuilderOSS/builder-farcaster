@@ -8,7 +8,9 @@ const {
   getCacheMock,
   getFollowerFidsMock,
   getFollowersDaoMapMock,
+  getProviderMock,
   getProposalWarningMock,
+  getTreasuryBalanceMock,
   getUserFidMock,
   setCacheMock,
 } = vi.hoisted(() => ({
@@ -17,7 +19,9 @@ const {
   getCacheMock: vi.fn(),
   getFollowerFidsMock: vi.fn(),
   getFollowersDaoMapMock: vi.fn(),
+  getProviderMock: vi.fn(),
   getProposalWarningMock: vi.fn(),
+  getTreasuryBalanceMock: vi.fn(),
   getUserFidMock: vi.fn(),
   setCacheMock: vi.fn(),
 }))
@@ -42,6 +46,7 @@ vi.mock('../../services/builder/get-active-proposals', () => ({
 }))
 
 vi.mock('@buildeross/utils', () => ({
+  getProvider: getProviderMock,
   getProposalWarning: getProposalWarningMock,
 }))
 
@@ -87,7 +92,11 @@ describe('processProposalsCommand', () => {
     getCacheMock.mockResolvedValue([])
     setCacheMock.mockResolvedValue(undefined)
     addToQueueMock.mockResolvedValue(undefined)
+    getProviderMock.mockReturnValue({
+      getBalance: getTreasuryBalanceMock,
+    })
     getProposalWarningMock.mockReturnValue('')
+    getTreasuryBalanceMock.mockResolvedValue(0n)
   })
 
   it('enqueues matching active proposals and updates cache', async () => {
