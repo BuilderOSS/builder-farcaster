@@ -99,12 +99,24 @@ async function getTreasuryBalance(
     transport: http(rpcUrl),
   })
 
-  const balance = await client.getBalance({
-    address: treasuryAddress,
-  })
+  try {
+    const balance = await client.getBalance({
+      address: treasuryAddress,
+    })
 
-  balanceCache.set(cacheKey, balance)
-  return balance
+    balanceCache.set(cacheKey, balance)
+    return balance
+  } catch (error) {
+    logger.error(
+      {
+        chainId,
+        error: error instanceof Error ? error.message : String(error),
+        treasuryAddress,
+      },
+      'Failed to fetch treasury balance.',
+    )
+    return undefined
+  }
 }
 
 /**
