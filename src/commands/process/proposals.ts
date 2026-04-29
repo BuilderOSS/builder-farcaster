@@ -1,5 +1,8 @@
+import { ProposalState } from '@buildeross/types'
+import { getProposalWarning, getProvider } from '@buildeross/utils'
 import { DateTime } from 'luxon'
 import { JsonValue } from 'type-fest'
+import { isAddress } from 'viem'
 import { getCache, setCache } from '../../cache.js'
 import { logger } from '../../logger.js'
 import { addToQueue } from '../../queue.js'
@@ -20,6 +23,101 @@ interface ProposalTargetInput {
 interface ProposalBuckets {
   endingProposals: Proposal[]
   votingProposals: Proposal[]
+}
+
+/**
+ * Derives proposal state for warning evaluation from voting timestamps.
+ * @param proposal - Proposal to evaluate.
+ * @param currentUnixTimestamp - Current unix timestamp in seconds.
+ * @returns Derived proposal state.
+ */
+function deriveProposalState(
+  proposal: Proposal,
+  currentUnixTimestamp: number,
+): ProposalState {
+  const voteStartTimestamp = Number(proposal.voteStart)
+
+  if (voteStartTimestamp > currentUnixTimestamp) {
+    return ProposalState.Pending
+  }
+
+  return ProposalState.Active
+}
+
+/**
+ * Reads treasury native-token balance for a proposal DAO.
+ * @param proposal - Proposal containing chain and treasury metadata.
+ * @param balanceCache - In-memory cache keyed by chain and treasury.
+ * @returns Treasury balance when retrievable.
+ */
+async function getTreasuryBalance(
+  proposal: Proposal,
+  balanceCache: Map<string, bigint>,
+): Promise<bigint | undefined> {
+  const chainId = proposal.dao.chain.id
+  const treasuryAddress = proposal.dao.treasuryAddress
+
+  if (!treasuryAddress || !isAddress(treasuryAddress)) {
+    return undefined
+  }
+
+  const cacheKey = `${chainId.toString()}:${treasuryAddress.toLowerCase()}`
+  const cachedBalance = balanceCache.get(cacheKey)
+
+  if (cachedBalance !== undefined) {
+    return cachedBalance
+  }
+
+  const client = getProvider(chainId)
+
+  try {
+    const balance = await client.getBalance({
+      address: treasuryAddress,
+    })
+
+    balanceCache.set(cacheKey, balance)
+    return balance
+  } catch (error) {
+    logger.error(
+      {
+        chainId,
+        error: error instanceof Error ? error.message : String(error),
+        treasuryAddress,
+      },
+      'Failed to fetch treasury balance.',
+    )
+    return undefined
+  }
+}
+
+/**
+ * Builds warning text for each proposal keyed by proposal id.
+ * @param proposals - Proposals to evaluate.
+ * @param currentUnixTimestamp - Current unix timestamp in seconds.
+ * @returns Map of proposal id to warning string.
+ */
+async function buildProposalWarnings(
+  proposals: Proposal[],
+  currentUnixTimestamp: number,
+): Promise<Map<string, string>> {
+  const warnings = new Map<string, string>()
+  const balanceCache = new Map<string, bigint>()
+
+  for (const proposal of proposals) {
+    const proposalState = deriveProposalState(proposal, currentUnixTimestamp)
+    const treasuryBalance = await getTreasuryBalance(proposal, balanceCache)
+    const warning = getProposalWarning({
+      proposer: proposal.proposer,
+      proposalState,
+      proposalValues: proposal.values,
+      treasuryBalance,
+      daoName: proposal.dao.name,
+    })
+
+    warnings.set(proposal.id, warning)
+  }
+
+  return warnings
 }
 
 /**
@@ -113,6 +211,7 @@ function splitProposalBuckets(
  * @param followers - Followers to process.
  * @param followerDaosMap - DAO ids per follower.
  * @param proposals - Proposals to notify about.
+ * @param proposalWarnings - Warning text keyed by proposal id.
  * @param cacheKeyPrefix - Cache key prefix for notified proposal ids.
  * @param options - Optional targeting configuration.
  */
@@ -120,6 +219,7 @@ async function notifyFollowersForProposals(
   followers: number[],
   followerDaosMap: Record<number, string[]>,
   proposals: Proposal[],
+  proposalWarnings: Map<string, string>,
   cacheKeyPrefix: string,
   options: TargetingOptions,
 ): Promise<void> {
@@ -163,6 +263,7 @@ async function notifyFollowersForProposals(
         await addToQueue({
           type: 'notification',
           recipient: follower,
+          warning: proposalWarnings.get(proposal.id),
           proposal: proposal as unknown as JsonValue,
         })
       }
@@ -222,6 +323,20 @@ export async function processProposalsCommand(options: TargetingOptions = {}) {
       return
     }
 
+    const notifiableProposals = [
+      ...new Map(
+        [...votingProposals, ...endingProposals].map((proposal) => [
+          proposal.id,
+          proposal,
+        ]),
+      ).values(),
+    ]
+
+    const proposalWarnings = await buildProposalWarnings(
+      notifiableProposals,
+      currentUnixTimestamp,
+    )
+
     const userFid = getUserFid()
     const followers = await getFollowerFids(userFid)
     const scopedFollowers = followers.filter((follower) =>
@@ -249,6 +364,7 @@ export async function processProposalsCommand(options: TargetingOptions = {}) {
       scopedFollowers,
       followerDaosMap,
       votingProposals,
+      proposalWarnings,
       'notified_voting_proposals',
       options,
     )
@@ -257,6 +373,7 @@ export async function processProposalsCommand(options: TargetingOptions = {}) {
       scopedFollowers,
       followerDaosMap,
       endingProposals,
+      proposalWarnings,
       'notified_ending_proposals',
       options,
     )

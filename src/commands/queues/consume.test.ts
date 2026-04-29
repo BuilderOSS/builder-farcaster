@@ -125,4 +125,22 @@ describe('queueConsumeCommand', () => {
       'send failed',
     )
   })
+
+  it('appends risk warning text to proposal notification', async () => {
+    claimPendingTasksMock.mockResolvedValue([
+      makeNotificationTask({
+        warning:
+          'The proposer is flagged as a blocked or known malicious actor.',
+      }),
+    ])
+
+    await queueConsumeCommand(1)
+
+    expect(sendDirectCastMock).toHaveBeenCalledWith(
+      envMock,
+      397143,
+      expect.stringContaining('⚠️ Risk warning:'),
+      expect.any(String),
+    )
+  })
 })
