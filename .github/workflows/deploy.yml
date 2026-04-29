@@ -73,7 +73,7 @@ jobs:
 
       # Set up SSH agent for secure connection to the server
       - name: Set Up SSH
-        uses: webfactory/ssh-agent@v0.9.1
+        uses: webfactory/ssh-agent@v0.10.0
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
