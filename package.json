@@ -41,7 +41,7 @@
     "remove-markdown": "0.6.0",
     "type-fest": "4.27.0",
     "uuid": "11.0.3",
-    "viem": "2.21.49",
+    "viem": "2.48.4",
     "zod": "3.23.8"
   },
   "devDependencies": {
