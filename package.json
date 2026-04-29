@@ -68,7 +68,7 @@
     "prettier-plugin-packagejson": "2.5.5",
     "prettier-plugin-prisma": "5.0.0",
     "prettier-plugin-toml": "2.0.1",
-    "typescript-eslint": "8.15.0",
+    "typescript-eslint": "8.59.1",
     "vite": "5.4.11",
     "vite-plugin-node-polyfills": "0.22.0",
     "vite-tsconfig-paths": "5.1.3",
